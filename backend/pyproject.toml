@@ -1,0 +1,34 @@
+[project]
+name = "sehat-backend"
+version = "0.1.0"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+markers = [
+    "unit: fast tests with no I/O (pure logic)",
+    "integration: in-process API tests via ASGI/TestClient",
+    "system: end-to-end flows against the full application",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:fastapi.*",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+src = ["app", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+warn_return_any = true
+warn_unused_ignores = true
+files = ["app"]
+ignore_missing_imports = true

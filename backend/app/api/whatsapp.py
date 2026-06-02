@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -13,29 +12,33 @@ router = APIRouter()
 console = logging.getLogger("uvicorn.error")
 
 
+def _as_str(value: Any) -> str | None:
+    return value if isinstance(value, str) else None
+
+
 def _extract_message_body(message_data: dict[str, Any]) -> str | None:
     """Pull human-readable text from Green API messageData (varies by typeMessage)."""
     type_message = message_data.get("typeMessage")
 
     if type_message == "textMessage":
-        return message_data.get("textMessageData", {}).get("textMessage")
+        return _as_str(message_data.get("textMessageData", {}).get("textMessage"))
 
     if type_message == "extendedTextMessage":
-        return message_data.get("extendedTextMessageData", {}).get("text")
+        return _as_str(message_data.get("extendedTextMessageData", {}).get("text"))
 
     if type_message == "quotedMessage":
         ext = message_data.get("extendedTextMessageData", {})
-        return ext.get("text")
+        return _as_str(ext.get("text"))
 
     if type_message in ("imageMessage", "videoMessage", "documentMessage", "audioMessage"):
-        caption = message_data.get("fileMessageData", {}).get("caption")
+        caption = _as_str(message_data.get("fileMessageData", {}).get("caption"))
         if caption:
             return caption
         return f"[{type_message}]"
 
     if type_message == "interactiveButtonsReply":
         reply = message_data.get("interactiveButtonsReply", {})
-        return reply.get("contentText") or reply.get("titleText")
+        return _as_str(reply.get("contentText")) or _as_str(reply.get("titleText"))
 
     return None
 
