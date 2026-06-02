@@ -34,3 +34,6 @@ migrate:
 
 triage-scratch:
 	cd backend && python scripts/scratch_gemini_triage.py
+
+graph-scratch:
+	cd backend && python scripts/scratch_langgraph_triage.py

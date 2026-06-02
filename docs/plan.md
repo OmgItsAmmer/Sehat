@@ -74,7 +74,7 @@ from google import genai
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 result = client.models.generate_content(
-    model="gemini-3.0-flash",
+    model="gemini-3-flash-preview",
     contents="seene mein dard ho raha hai",
     # Wire structured output however you implement it in `tools.py`
     # (JSON schema, response_mime_type, or function/tool calling).
