@@ -2,7 +2,7 @@
 
 Sehat’s intake flow is a **compiled LangGraph `StateGraph`**, not a single LLM chat loop. Each step is a small Python function (a *node*) that reads shared state, returns a partial update, and hands off to the next node via fixed or conditional edges.
 
-Phase 4 implements the graph in:
+Phase 4–5 implement the graph and WhatsApp wiring in:
 
 | File | Role |
 |------|------|
@@ -11,7 +11,9 @@ Phase 4 implements the graph in:
 | `backend/app/agent/graph.py` | Graph wiring + `graph = build_graph().compile()` |
 | `backend/app/agent/triage.py` | Phase 3 Gemini call used inside `classify_node` |
 
-Run the scratch script (no WhatsApp, no Redis):
+**Production path (Phase 5):** Green API webhook → `services/intake.process_incoming_message()` → `graph.invoke` → `whatsapp.send_text(reply)`.
+
+Run the scratch script (no WhatsApp):
 
 ```bash
 make graph-scratch
@@ -24,7 +26,9 @@ make graph-scratch
 
 ```mermaid
 flowchart TD
-    START([START]) --> classify[classify]
+    START([START]) --> ingress[ingress]
+    ingress -->|new case| classify[classify]
+    ingress -->|P2/P3 slots pending| slot_check[slot_check]
     classify -->|P1| emergency[emergency_exit]
     classify -->|OOS| oos[oos_exit]
     classify -->|P2/P3| slot_check[slot_check]
@@ -61,6 +65,7 @@ State is a `typing_extensions.TypedDict` (required on Python 3.11 with Pydantic/
 | `routed_to` | Department after `route_node` |
 | `escalated` | Human attention needed |
 | `slack_notified` | Set when `notify_human_node` runs |
+| `pending_slot` | Slot name the bot is waiting for (filled on next inbound message) |
 | `reply` | Text to send back to the patient |
 
 Required slots (Phase 4 defaults): `chief_complaint`, `symptom_duration`, `preferred_day`.
@@ -98,7 +103,7 @@ Required slots (Phase 4 defaults): `chief_complaint`, `symptom_duration`, `prefe
 
 ### `notify_human`
 
-- Phase 4: structured log line (`TRIAGE_ALERT`). Phase 5: Slack webhook in `services/slack.py`.
+- Posts to `SLACK_WEBHOOK_URL` via `services/slack.py` (logs a warning if unset).
 
 ### `confirm_user`
 
@@ -141,17 +146,17 @@ result = graph.invoke({...})
 
 | Command | What it checks |
 |---------|----------------|
-| `make test-unit` | `tests/unit/test_graph.py` — P1 keyword path, OOS, P3 with/without slots (Gemini mocked) |
-| `make graph-scratch` | Live path for `"seene mein dard"` (needs `GEMINI_API_KEY` only if keywords removed; keywords skip API) |
+| `make test-unit` | Graph, intake, memory, slack, whatsapp send |
+| `pytest tests/integration/test_whatsapp_triage.py` | Webhook → graph → mocked reply |
+| `make graph-scratch` | Direct `graph.invoke` without WhatsApp |
 
 ---
 
-## What comes next (not in Phase 4)
+## What comes next
 
 | Phase | Change |
 |-------|--------|
-| 5 | WhatsApp webhook calls `graph.invoke`; Slack in `notify_human` |
-| 6 | Redis `load`/`save` per phone; resume after gather-slots END |
+| 6 | Redis-backed `memory.load`/`save` with TTL (replace in-process dict) |
 | 7 | `interrupt` at low confidence → `await_human_review`; `update_state` + resume |
 | 8 | Specialist prompts in `gather_slots` via `specialists/` |
 

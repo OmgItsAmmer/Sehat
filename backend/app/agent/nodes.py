@@ -11,6 +11,7 @@ from app.agent.state import (
     missing_slots,
 )
 from app.agent.triage import classify_message_with_gemini
+from app.services import slack
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,7 @@ def gather_slots_node(state: TriageState) -> dict:
     question = SLOT_QUESTIONS.get(slot_name, f"Please share your {slot_name}.")
     return {
         "clarification_rounds": rounds + 1,
+        "pending_slot": slot_name,
         "reply": question,
     }
 
@@ -128,18 +130,30 @@ def route_node(state: TriageState) -> dict:
 
 
 def notify_human_node(state: TriageState) -> dict:
-    """Alert staff (Slack in Phase 5; log-only stub here)."""
+    """Alert staff via Slack webhook (P1 / P2 / escalated)."""
     phone = state.get("patient_phone", "unknown")
     priority = state.get("priority", "?")
-    routed = state.get("routed_to") or "n/a"
-    logger.warning(
-        "TRIAGE_ALERT phone=%s priority=%s routed_to=%s escalated=%s",
-        phone,
-        priority,
-        routed,
-        state.get("escalated", False),
+    routed = state.get("routed_to")
+    preview = latest_message(state)
+    escalated = bool(state.get("escalated"))
+
+    sent = slack.send_triage_alert(
+        patient_phone=phone,
+        priority=priority,
+        routed_to=routed,
+        reasoning=state.get("reasoning") or "",
+        message_preview=preview,
+        escalated=escalated,
     )
-    return {"slack_notified": True}
+    if not sent:
+        logger.warning(
+            "TRIAGE_ALERT phone=%s priority=%s routed_to=%s escalated=%s",
+            phone,
+            priority,
+            routed or "n/a",
+            escalated,
+        )
+    return {"slack_notified": sent}
 
 
 def confirm_user_node(state: TriageState) -> dict:

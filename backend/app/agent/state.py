@@ -43,6 +43,7 @@ class TriageState(TypedDict, total=False):
     routed_to: str | None
     escalated: bool
     slack_notified: bool
+    pending_slot: str | None
     reply: str
 
 
@@ -60,6 +61,7 @@ def fresh_state(patient_phone: str) -> TriageState:
         "routed_to": None,
         "escalated": False,
         "slack_notified": False,
+        "pending_slot": None,
         "reply": "",
     }
 

@@ -25,5 +25,7 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3-flash-preview"
 
+    slack_webhook_url: str = ""
+
 
 settings = Settings()

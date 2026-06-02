@@ -29,7 +29,8 @@ def _invoke_chest_pain() -> dict:
     )
 
 
-def test_p1_keyword_override_end_to_end() -> None:
+@patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
+def test_p1_keyword_override_end_to_end(_mock_slack) -> None:
     """P1 keywords bypass Gemini and traverse emergency → notify → confirm."""
     with patch("app.agent.nodes.classify_message_with_gemini") as mock_gemini:
         result = _invoke_chest_pain()
@@ -120,4 +121,5 @@ def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     assert result["priority"] == "P3"
     assert result["slots_complete"] is False
     assert result["reply"]
+    assert result.get("pending_slot") == "chief_complaint"
     assert result.get("routed_to") is None

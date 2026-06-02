@@ -7,6 +7,15 @@ from langgraph.graph import END, START, StateGraph
 from app.agent import nodes
 from app.agent.state import TriageState
 
+
+def _route_from_start(state: TriageState) -> str:
+    """Resume slot-filling without re-classifying the latest short answer."""
+    priority = state.get("priority")
+    if priority in ("P2", "P3") and not state.get("slots_complete"):
+        return "slot_check"
+    return "classify"
+
+
 def _route_after_classify(state: TriageState) -> str:
     priority = state.get("priority")
     if priority == "P1":
@@ -39,6 +48,7 @@ def _route_after_route(state: TriageState) -> str:
 def build_graph() -> StateGraph:
     builder = StateGraph(TriageState)
 
+    builder.add_node("ingress", lambda state: {})
     builder.add_node("classify", nodes.classify_node)
     builder.add_node("emergency_exit", nodes.emergency_exit_node)
     builder.add_node("oos_exit", nodes.oos_exit_node)
@@ -48,7 +58,12 @@ def build_graph() -> StateGraph:
     builder.add_node("notify_human", nodes.notify_human_node)
     builder.add_node("confirm_user", nodes.confirm_user_node)
 
-    builder.add_edge(START, "classify")
+    builder.add_edge(START, "ingress")
+    builder.add_conditional_edges(
+        "ingress",
+        _route_from_start,
+        {"classify": "classify", "slot_check": "slot_check"},
+    )
     builder.add_conditional_edges(
         "classify",
         _route_after_classify,

@@ -11,12 +11,14 @@ Patient (WhatsApp)
 Green API webhook ──► FastAPI (backend/app/api/whatsapp.py)
        │                      │
        │                      ├── persist message (Postgres)
-       │                      ├── load TriageState (Redis, Phase 6)
-       │                      └── graph.invoke(state)  ◄── LangGraph
+       │                      ├── load/save TriageState (`services/memory.py`)
+       │                      ├── graph.invoke(state)  ◄── LangGraph
+       │                      ├── persist inbound (Postgres)
+       │                      └── send reply (`services/whatsapp.py`)
        │                               │
        │                               ├── classify (Gemini)
        │                               ├── slot-fill / route
-       │                               └── notify (Slack, Phase 5)
+       │                               └── notify (`services/slack.py`)
        ▼
 Reply via Green API          Dashboard / overrides (Phase 7)
 ```
@@ -28,12 +30,12 @@ Reply via Green API          Dashboard / overrides (Phase 7)
 | API | `backend/app/api/` | Webhooks, health, dashboard (later) |
 | Agent | `backend/app/agent/` | LangGraph state, nodes, graph, prompts, triage |
 | Models | `backend/app/models/` | SQLAlchemy `patients`, `messages` |
-| Services | `backend/app/services/` | WhatsApp client, persistence, Slack (later) |
+| Services | `backend/app/services/` | `intake`, `memory`, `whatsapp`, `slack`, `persist` |
 | Migrations | `backend/database/migrations/` | Alembic |
 
 ## Agent / LangGraph
 
-The core product logic lives in the **triage graph**, not in the webhook handler. The webhook should stay thin: normalize payload → load state → append message → invoke graph → save state → send `reply`.
+The core product logic lives in the **triage graph**, not in the webhook handler. The webhook delegates to `process_incoming_message()` in `services/intake.py`: load state → append message → apply slot answer → `graph.invoke` → save → WhatsApp reply.
 
 **Deep dive:** [langgraph.md](./langgraph.md) — state fields, every node, conditional edges, scratch tests, and phase roadmap.
 
@@ -54,7 +56,7 @@ result = graph.invoke(state)
 | Store | Use |
 |-------|-----|
 | **Postgres** | Patients, messages, cases, overrides (dashboard phases) |
-| **Redis** | Per-phone `TriageState` with TTL (Phase 6) |
+| **In-memory sessions** | Per-phone `TriageState` via `memory.py` (Redis + TTL in Phase 6) |
 | **Gemini API** | Structured JSON classification in `classify_node` |
 
 ## Build phases
@@ -67,10 +69,12 @@ Implementation order is documented in [plan.md](../plan.md). Current status:
 | 2 | Postgres persistence | Done |
 | 3 | Standalone Gemini classify | Done (`triage.py`) |
 | 4 | LangGraph graph | Done (`state.py`, `nodes.py`, `graph.py`) |
-| 5+ | WhatsApp wiring, memory, dashboard, specialists, evals | Planned |
+| 5 | WhatsApp + Slack wiring | Done (`api/whatsapp.py`, `services/intake.py`, `whatsapp.py`, `slack.py`) |
+| 6+ | Redis memory, dashboard, specialists, evals | Planned |
 
 ## Related docs
 
+- [Phase 5 — WhatsApp + triage wiring](../phase-5-whatsapp-triage.md)
 - [LangGraph triage graph](./langgraph.md)
 - [Build order / phases](../plan.md)
 - [Green API WhatsApp runbook](../runbooks/Green-api-whatsapp-integration_runbook.md)

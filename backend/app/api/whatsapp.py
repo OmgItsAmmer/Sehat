@@ -9,10 +9,9 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.services.persist import persist_incoming_message
+from app.services.intake import process_incoming_message
 
 router = APIRouter()
-# uvicorn.error always prints in the same terminal as "Uvicorn running on ..."
 console = logging.getLogger("uvicorn.error")
 
 
@@ -74,7 +73,7 @@ def _format_incoming_log(payload: dict[str, Any]) -> str:
 async def green_api_webhook(
     request: Request,
     db: Session | None = Depends(get_db),
-) -> dict[str, bool]:
+) -> dict[str, bool | str]:
     """
     Green API POSTs every instance event here (Webhook Endpoint technology).
 
@@ -88,17 +87,24 @@ async def green_api_webhook(
         if line.strip():
             console.info(line)
 
-    # Phase 2 — persist inbound messages (no-op if DATABASE_URL isn't set).
-    if db is not None and payload.get("typeWebhook") == "incomingMessageReceived":
+    if payload.get("typeWebhook") == "incomingMessageReceived":
         sender = payload.get("senderData") or {}
         chat_id = sender.get("chatId")
         message_data = payload.get("messageData") or {}
         body = _extract_message_body(message_data) if message_data else None
 
         if isinstance(chat_id, str) and body:
-            persist_incoming_message(db=db, patient_phone=chat_id, body=body, raw_payload=payload)
+            result = process_incoming_message(
+                chat_id=chat_id,
+                body=body,
+                db=db,
+                raw_payload=payload,
+            )
+            priority = result.get("priority")
+            if priority:
+                console.info("  triage  : priority=%s reply_sent=%s", priority, bool(result.get("reply")))
 
-    if payload.get("typeWebhook") != "incomingMessageReceived":
+    elif payload.get("typeWebhook") != "incomingMessageReceived":
         console.info("(non-message webhook — see Green API dashboard for full payload)")
 
     return {"ok": True}
