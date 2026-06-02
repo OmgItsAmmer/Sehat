@@ -8,20 +8,20 @@ import pytest
 from app.agent.triage import TriageResult
 from app.services import intake, memory
 
-pytestmark = pytest.mark.unit
+pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
 
 
 @pytest.fixture(autouse=True)
-def _clear_memory() -> None:
-    memory.clear_all()
+async def _clear_memory() -> None:
+    await memory.clear_all()
     yield
-    memory.clear_all()
+    await memory.clear_all()
 
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
-def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> None:
-    result = intake.process_incoming_message(
+async def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> None:
+    result = await intake.process_incoming_message(
         chat_id="79001234567@c.us",
         body="seene mein dard",
     )
@@ -35,7 +35,7 @@ def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> None:
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.classify_message_with_gemini")
-def test_oos_message_sends_redirect_without_slack(
+async def test_oos_message_sends_redirect_without_slack(
     mock_classify,
     _mock_send,
 ) -> None:
@@ -45,7 +45,7 @@ def test_oos_message_sends_redirect_without_slack(
         reasoning="Billing.",
     )
 
-    result = intake.process_incoming_message(
+    result = await intake.process_incoming_message(
         chat_id="79001234567@c.us",
         body="fee kitni hai",
     )
@@ -57,7 +57,7 @@ def test_oos_message_sends_redirect_without_slack(
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.classify_message_with_gemini")
-def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
+async def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",
         confidence=0.9,
@@ -65,7 +65,7 @@ def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
     )
     chat = "79001234567@c.us"
 
-    first = intake.process_incoming_message(
+    first = await intake.process_incoming_message(
         chat_id=chat,
         body="appointment chahiye back pain",
     )
@@ -75,7 +75,7 @@ def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
     assert not first["slots_complete"]
 
     mock_classify.reset_mock()
-    second = intake.process_incoming_message(chat_id=chat, body="lower back, one week")
+    second = await intake.process_incoming_message(chat_id=chat, body="lower back, one week")
     assert second["slots"].get("chief_complaint") == "lower back, one week"
     assert second.get("pending_slot") in ("symptom_duration", None)
     assert mock_send.call_count == 2

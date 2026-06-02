@@ -36,7 +36,7 @@ def apply_pending_slot_answer(state: TriageState) -> dict[str, Any]:
     return {"slots": slots, "pending_slot": None}
 
 
-def process_incoming_message(
+async def process_incoming_message(
     *,
     chat_id: str,
     body: str,
@@ -44,7 +44,7 @@ def process_incoming_message(
     raw_payload: dict[str, Any] | None = None,
 ) -> TriageState:
     """Load session, run triage graph, save state, optionally persist and reply."""
-    state = memory.load(chat_id)
+    state = await memory.load(chat_id)
     messages = list(state.get("messages") or [])
     messages.append(body)
     state["messages"] = messages
@@ -55,7 +55,7 @@ def process_incoming_message(
         state.update(slot_patch)  # type: ignore[typeddict-unknown-key]
 
     result: TriageState = graph.invoke(state)
-    memory.save(chat_id, result)
+    await memory.save(chat_id, result)
 
     if db is not None:
         persist_incoming_message(

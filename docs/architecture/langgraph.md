@@ -156,7 +156,7 @@ result = graph.invoke({...})
 
 | Phase | Change |
 |-------|--------|
-| 6 | Redis-backed `memory.load`/`save` with TTL (replace in-process dict) |
+| 6 | Done — Redis-backed `memory.load`/`save` with TTL ([phase-6 doc](../phase-6-session-memory.md)) |
 | 7 | `interrupt` at low confidence → `await_human_review`; `update_state` + resume |
 | 8 | Specialist prompts in `gather_slots` via `specialists/` |
 

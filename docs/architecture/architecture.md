@@ -56,7 +56,7 @@ result = graph.invoke(state)
 | Store | Use |
 |-------|-----|
 | **Postgres** | Patients, messages, cases, overrides (dashboard phases) |
-| **In-memory sessions** | Per-phone `TriageState` via `memory.py` (Redis + TTL in Phase 6) |
+| **Redis sessions** | Per-phone `TriageState` via `memory.py` (`REDIS_URL`, 24h TTL; in-memory if unset) |
 | **Gemini API** | Structured JSON classification in `classify_node` |
 
 ## Build phases
@@ -69,12 +69,14 @@ Implementation order is documented in [plan.md](../plan.md). Current status:
 | 2 | Postgres persistence | Done |
 | 3 | Standalone Gemini classify | Done (`triage.py`) |
 | 4 | LangGraph graph | Done (`state.py`, `nodes.py`, `graph.py`) |
-| 5 | WhatsApp + Slack wiring | Done (`api/whatsapp.py`, `services/intake.py`, `whatsapp.py`, `slack.py`) |
-| 6+ | Redis memory, dashboard, specialists, evals | Planned |
+| 5 | WhatsApp + Slack wiring | Done |
+| 6 | Redis session memory | Done (`services/memory.py`) |
+| 7+ | Dashboard, specialists, evals | Planned |
 
 ## Related docs
 
 - [Phase 5 — WhatsApp + triage wiring](../phase-5-whatsapp-triage.md)
+- [Phase 6 — Redis session memory](../phase-6-session-memory.md)
 - [LangGraph triage graph](./langgraph.md)
 - [Build order / phases](../plan.md)
 - [Green API WhatsApp runbook](../runbooks/Green-api-whatsapp-integration_runbook.md)

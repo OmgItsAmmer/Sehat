@@ -81,7 +81,7 @@ state = memory.load(chat_id)   # fresh_state() if new patient
 state["messages"].append(body)
 ```
 
-Sessions live in a **process-local dictionary** keyed by `session:{chatId}`. They survive across webhook calls on the same uvicorn worker but **not** across server restarts or multiple workers. Phase 6 replaces this with Redis + TTL.
+Sessions are stored via `services/memory.py`. With `REDIS_URL` set, state lives in Redis (24h TTL). Without it, a process-local fallback is used (CI / smoke tests). See [Phase 6 — Session memory](./phase-6-session-memory.md).
 
 ### 3. Slot answer before graph
 
@@ -209,15 +209,9 @@ sequenceDiagram
 
 ---
 
-## What Phase 6 will change
+## Session memory (Phase 6)
 
-Phase 5 intentionally keeps memory **in-process** so wiring could ship without Redis. Phase 6 will:
-
-- Store `TriageState` in Redis with 24h TTL (`REDIS_URL`)
-- Keep the same `memory.load` / `memory.save` interface
-- Survive restarts and horizontal scaling
-
-The webhook and `intake.py` flow should not need structural changes — only the memory backend.
+Phase 6 added Redis-backed `await memory.load` / `save`. The webhook flow is unchanged; see [phase-6-session-memory.md](./phase-6-session-memory.md).
 
 ---
 
