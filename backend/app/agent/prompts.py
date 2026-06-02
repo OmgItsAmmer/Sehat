@@ -11,4 +11,3 @@ Return ONLY valid JSON with these keys:
 - confidence: number between 0 and 1
 - reasoning: one short sentence (no markdown)
 """
-

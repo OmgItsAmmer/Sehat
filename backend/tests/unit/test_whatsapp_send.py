@@ -41,7 +41,5 @@ def test_send_text_skips_empty_message() -> None:
 @patch("app.services.whatsapp.settings.green_api_token", "token")
 @patch("httpx.Client")
 def test_send_text_returns_false_on_http_error(mock_client_cls: MagicMock) -> None:
-    mock_client_cls.return_value.__enter__.return_value.post.side_effect = httpx.HTTPError(
-        "fail"
-    )
+    mock_client_cls.return_value.__enter__.return_value.post.side_effect = httpx.HTTPError("fail")
     assert whatsapp.send_text(chat_id="79001234567@c.us", message="Hi") is False

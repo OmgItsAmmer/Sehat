@@ -50,9 +50,7 @@ def test_send_triage_alert_noop_without_webhook() -> None:
 @patch("app.services.slack.settings.slack_webhook_url", "https://hooks.slack.com/test")
 @patch("httpx.Client")
 def test_send_triage_alert_returns_false_on_http_error(mock_client_cls: MagicMock) -> None:
-    mock_client_cls.return_value.__enter__.return_value.post.side_effect = httpx.HTTPError(
-        "fail"
-    )
+    mock_client_cls.return_value.__enter__.return_value.post.side_effect = httpx.HTTPError("fail")
 
     ok = slack.send_triage_alert(
         patient_phone="x",

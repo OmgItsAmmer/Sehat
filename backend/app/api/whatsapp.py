@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
@@ -72,7 +72,7 @@ def _format_incoming_log(payload: dict[str, Any]) -> str:
 @router.post("/webhook")
 async def green_api_webhook(
     request: Request,
-    db: Session | None = Depends(get_db),
+    db: Annotated[Session | None, Depends(get_db)],
 ) -> dict[str, bool | str]:
     """
     Green API POSTs every instance event here (Webhook Endpoint technology).
@@ -102,7 +102,11 @@ async def green_api_webhook(
             )
             priority = result.get("priority")
             if priority:
-                console.info("  triage  : priority=%s reply_sent=%s", priority, bool(result.get("reply")))
+                console.info(
+                    "  triage  : priority=%s reply_sent=%s",
+                    priority,
+                    bool(result.get("reply")),
+                )
 
     elif payload.get("typeWebhook") != "incomingMessageReceived":
         console.info("(non-message webhook — see Green API dashboard for full payload)")

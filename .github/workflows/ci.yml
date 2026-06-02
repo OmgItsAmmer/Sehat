@@ -104,11 +104,12 @@ jobs:
     name: CI gate
     needs: [lint, unit-tests, integration-tests, system-tests]
     runs-on: ubuntu-latest
-    if: always()
+    if: >-
+      ${{ always() && !cancelled()
+      && needs.lint.result == 'success'
+      && needs.unit-tests.result == 'success'
+      && needs.integration-tests.result == 'success'
+      && needs.system-tests.result == 'success' }}
     steps:
-      - name: Verify all jobs passed
-        run: |
-          test "${{ needs.lint.result }}" = "success"
-          test "${{ needs.unit-tests.result }}" = "success"
-          test "${{ needs.integration-tests.result }}" = "success"
-          test "${{ needs.system-tests.result }}" = "success"
+      - name: All CI jobs passed
+        run: echo "lint, unit, integration, and system jobs succeeded"

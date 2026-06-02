@@ -25,4 +25,3 @@ def persist_incoming_message(
     db.commit()
     db.refresh(msg)
     return msg
-

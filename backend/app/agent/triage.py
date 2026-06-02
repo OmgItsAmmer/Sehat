@@ -21,7 +21,11 @@ class GeminiTriageConfig:
     model: str = "gemini-3-flash-preview"
 
 
-def classify_message_with_gemini(message: str, *, cfg: GeminiTriageConfig | None = None) -> TriageResult:
+def classify_message_with_gemini(
+    message: str,
+    *,
+    cfg: GeminiTriageConfig | None = None,
+) -> TriageResult:
     """
     Phase 3 scratch-call: one Gemini request returning structured triage JSON.
     """
@@ -58,4 +62,3 @@ def classify_message_with_gemini(message: str, *, cfg: GeminiTriageConfig | None
 
     data = json.loads(text)
     return TriageResult.model_validate(data)
-

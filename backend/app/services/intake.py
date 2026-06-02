@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.agent.graph import graph
-from app.agent.state import TriageState, latest_message, missing_slots
+from app.agent.state import TriageState, latest_message
 from app.services import memory, whatsapp
 from app.services.persist import persist_incoming_message
 
