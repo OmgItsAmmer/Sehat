@@ -17,7 +17,8 @@ class TriageResult(BaseModel):
 
 @dataclass(frozen=True)
 class GeminiTriageConfig:
-    model: str = "gemini-3.0-flash"
+    # Not "gemini-3.0-flash" — that id does not exist on the API.
+    model: str = "gemini-3-flash-preview"
 
 
 def classify_message_with_gemini(message: str, *, cfg: GeminiTriageConfig | None = None) -> TriageResult:
@@ -27,15 +28,20 @@ def classify_message_with_gemini(message: str, *, cfg: GeminiTriageConfig | None
     if not settings.gemini_api_key:
         raise RuntimeError("GEMINI_API_KEY is not configured")
 
-    cfg = cfg or GeminiTriageConfig()
+    model = (cfg.model if cfg else settings.gemini_model) or GeminiTriageConfig.model
 
     # Import lazily so tests don't require the dependency.
     from google import genai  # type: ignore
+    from google.genai import types  # type: ignore
 
     client = genai.Client(api_key=settings.gemini_api_key)
 
     prompt = f"{TRIAGE_SYSTEM_PROMPT}\n\nMessage: {message}"
-    resp = client.models.generate_content(model=cfg.model, contents=prompt)
+    resp = client.models.generate_content(
+        model=model,
+        contents=prompt,
+        config=types.GenerateContentConfig(response_mime_type="application/json"),
+    )
 
     # The SDK returns a rich object; extract raw text defensively.
     text: str | None = None
