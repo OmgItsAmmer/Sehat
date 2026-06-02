@@ -28,3 +28,9 @@ test-integration:
 
 test-system:
 	cd backend && pytest tests/system -m system -v
+
+migrate:
+	cd backend && alembic upgrade head
+
+triage-scratch:
+	cd backend && python scripts/scratch_gemini_triage.py

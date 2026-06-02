@@ -12,7 +12,7 @@
 WhatsApp → Green API webhook → FastAPI endpoint → print to console
 ```
 
-Just `print(message)`. No Claude. No database. Prove the pipe works first.  
+Just `print(message)`. No Gemini. No database. Prove the pipe works first.  
 Everything else depends on this. If you wire WhatsApp last, you'll spend day 7 debugging webhook signatures instead of polishing your demo.
 
 **Files:**
@@ -33,7 +33,7 @@ backend/app/services/whatsapp.py
 WhatsApp → FastAPI → save to DB → return 200
 ```
 
-Run `docker-compose up` to get Postgres and Redis live. Write your first Alembic migration for `patients` and `messages` tables. Every message now has a home.
+Use **Neon (Postgres)** as your database (set `DATABASE_URL` to your Neon connection string). Keep **Redis** for session memory (local via Docker is fine). Write your first Alembic migration for `patients` and `messages` tables. Every message now has a home.
 
 **Files:**
 ```
@@ -45,17 +45,18 @@ backend/database/migrations/     # first alembic revision
 
 **Commands:**
 ```bash
-docker-compose up -d
+# bring up Redis locally (Postgres is Neon)
+docker-compose up -d redis
 make migrate
 ```
 
 ---
 
-## Phase 3 — One Claude call, no graph yet `Day 2`
+## Phase 3 — One Gemini call, no graph yet `Day 2`
 
 **Goal:** Classify a hardcoded message and print structured JSON back.
 
-Don't touch LangGraph yet. Call Claude directly with your triage prompt and confirm you get back `priority`, `confidence`, `reasoning`. Paste `"seene mein dard"` as a test string. Watch it return P1.
+Don't touch LangGraph yet. Call **Gemini** directly with your triage prompt and confirm you get back `priority`, `confidence`, `reasoning`. Paste `"seene mein dard"` as a test string. Watch it return P1.
 
 This proves your prompt works **before** you wire it into a state machine.
 
@@ -67,21 +68,19 @@ backend/app/agent/tools.py        # JSON schema for tool-use
 
 **Scratch test — not production code:**
 ```python
-import anthropic
+import os
+from google import genai
 
-client = anthropic.Anthropic()
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
-result = client.messages.create(
-    model="claude-sonnet-4-6",
-    max_tokens=1024,
-    tools=[TRIAGE_TOOL_SCHEMA],   # defined in tools.py
-    messages=[{
-        "role": "user",
-        "content": "seene mein dard ho raha hai"
-    }]
+result = client.models.generate_content(
+    model="gemini-3.0-flash",
+    contents="seene mein dard ho raha hai",
+    # Wire structured output however you implement it in `tools.py`
+    # (JSON schema, response_mime_type, or function/tool calling).
 )
 
-print(result.content)
+print(result)
 # expect: {"priority": "P1", "confidence": 0.96, ...}
 ```
 
@@ -397,7 +396,7 @@ Cut in this order. Least painful first.
 ```
 Phase 1 (pipe works)
     └── Phase 2 (DB)
-            └── Phase 3 (Claude call)
+            └── Phase 3 (Gemini call)
                     └── Phase 4 (graph)
                             └── Phase 5 (WhatsApp + graph)
                                     └── Phase 6 (memory)

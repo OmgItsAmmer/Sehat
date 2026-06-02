@@ -5,7 +5,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
+from sqlalchemy.orm import Session
+
+from app.database.session import get_db
+from app.services.persist import persist_incoming_message
 
 router = APIRouter()
 # uvicorn.error always prints in the same terminal as "Uvicorn running on ..."
@@ -67,7 +71,10 @@ def _format_incoming_log(payload: dict[str, Any]) -> str:
 
 
 @router.post("/webhook")
-async def green_api_webhook(request: Request) -> dict[str, bool]:
+async def green_api_webhook(
+    request: Request,
+    db: Session | None = Depends(get_db),
+) -> dict[str, bool]:
     """
     Green API POSTs every instance event here (Webhook Endpoint technology).
 
@@ -80,6 +87,16 @@ async def green_api_webhook(request: Request) -> dict[str, bool]:
     for line in log_block.splitlines():
         if line.strip():
             console.info(line)
+
+    # Phase 2 — persist inbound messages (no-op if DATABASE_URL isn't set).
+    if db is not None and payload.get("typeWebhook") == "incomingMessageReceived":
+        sender = payload.get("senderData") or {}
+        chat_id = sender.get("chatId")
+        message_data = payload.get("messageData") or {}
+        body = _extract_message_body(message_data) if message_data else None
+
+        if isinstance(chat_id, str) and body:
+            persist_incoming_message(db=db, patient_phone=chat_id, body=body, raw_payload=payload)
 
     if payload.get("typeWebhook") != "incomingMessageReceived":
         console.info("(non-message webhook — see Green API dashboard for full payload)")
