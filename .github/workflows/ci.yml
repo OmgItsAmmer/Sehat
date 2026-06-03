@@ -107,6 +107,10 @@ jobs:
     name: CI gate
     needs: [lint, unit-tests, integration-tests, system-tests]
     runs-on: ubuntu-latest
+    # Workflow default working-directory is backend; this job has no checkout step.
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     if: >-
       ${{ always() && !cancelled()
       && needs.lint.result == 'success'
