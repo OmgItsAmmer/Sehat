@@ -7,7 +7,7 @@ from typing import cast
 from langgraph.graph import END, START, StateGraph
 
 from app.agent import nodes
-from app.agent.state import TriageState
+from app.agent.state import TriageState, missing_slots
 from app.config import settings
 
 
@@ -24,7 +24,7 @@ def _route_from_start(state: TriageState) -> str:
         if state.get("slots_complete"):
             return "confirm_user"
         return "oos_exit"
-    if priority in ("P2", "P3") and not state.get("slots_complete"):
+    if priority in ("P2", "P3") and (missing_slots(state) or not state.get("slots_complete")):
         return "slot_check"
     if priority in ("P2", "P3") and state.get("slots_complete"):
         if state.get("escalated") or priority == "P2":

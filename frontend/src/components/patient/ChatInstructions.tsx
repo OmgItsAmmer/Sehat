@@ -2,8 +2,9 @@ import { Icon } from "@/components/stitch/Icon";
 
 const INSTRUCTIONS = [
   "Describe your symptoms in Urdu or English — Sehat replies in the same language.",
-  "Include what hurts, how long it has been going on, and how severe it feels.",
-  "For chest pain, breathing trouble, heavy bleeding, or unconsciousness — call 1122 immediately.",
+  "You do not pick a department. Sehat routes you automatically (general, pediatrics, or cardiology) from what you write.",
+  "For routine visits it will ask: main symptom, how long, then a preferred appointment day — answer each message in order.",
+  "Mention child/baby for pediatrics; chest or heart symptoms for cardiology. For emergencies (chest pain, breathing, bleeding) call 1122 immediately.",
   "This is a clinic intake demo; it does not replace emergency care or a doctor visit.",
 ] as const;
 

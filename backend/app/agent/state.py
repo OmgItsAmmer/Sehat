@@ -86,3 +86,14 @@ def missing_slots(state: TriageState) -> list[str]:
     profile = get_profile(state.get("routed_to"))
     filled = state.get("slots") or {}
     return [name for name in profile.required_slots if not filled.get(name)]
+
+
+def intake_finished(state: TriageState) -> bool:
+    """True when this complaint's intake slots are done (ready for a new topic)."""
+    if state.get("pending_slot"):
+        return False
+    if state.get("awaiting_human_review"):
+        return False
+    if missing_slots(state):
+        return False
+    return bool(state.get("slots_complete"))

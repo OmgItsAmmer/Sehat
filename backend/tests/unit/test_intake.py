@@ -68,7 +68,18 @@ async def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> Non
     assert not first["slots_complete"]
 
     mock_classify.reset_mock()
-    second = await intake.process_incoming_message(chat_id=chat, body="lower back, one week")
-    assert second["slots"].get("chief_complaint") == "lower back, one week"
-    assert second.get("pending_slot") in ("symptom_duration", None)
-    assert mock_send.call_count == 2
+    second = await intake.process_incoming_message(chat_id=chat, body="lower back pain")
+    assert second["slots"].get("chief_complaint") == "lower back pain"
+    assert second.get("pending_slot") == "symptom_duration"
+    assert not second["slots_complete"]
+
+    third = await intake.process_incoming_message(chat_id=chat, body="about one week")
+    assert third["slots"].get("symptom_duration") == "about one week"
+    assert third.get("pending_slot") == "preferred_day"
+    assert not third["slots_complete"]
+
+    fourth = await intake.process_incoming_message(chat_id=chat, body="Wednesday")
+    assert fourth["slots"].get("preferred_day") == "Wednesday"
+    assert fourth["slots_complete"] is True
+    assert fourth.get("pending_slot") is None
+    assert mock_send.call_count == 4

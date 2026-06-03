@@ -18,7 +18,8 @@ from app.services import slack
 
 logger = logging.getLogger(__name__)
 
-MAX_CLARIFICATION_ROUNDS = 2
+# Max gather_slots passes before human handoff (per complaint). Scales with specialist schema.
+MAX_SLOT_GATHER_MULTIPLIER = 2
 
 
 def _matches_p1_keywords(text: str) -> bool:
@@ -104,11 +105,13 @@ def gather_slots_node(state: TriageState) -> dict:
     """Ask for the next missing slot (one question per graph pass)."""
     missing = missing_slots(state)
     rounds = state.get("clarification_rounds") or 0
+    profile = get_profile(state.get("routed_to"))
+    max_rounds = len(profile.required_slots) * MAX_SLOT_GATHER_MULTIPLIER
 
     if not missing:
         return {"slots_complete": True}
 
-    if rounds >= MAX_CLARIFICATION_ROUNDS:
+    if rounds >= max_rounds:
         return {
             "escalated": True,
             "slots_complete": True,
@@ -119,7 +122,6 @@ def gather_slots_node(state: TriageState) -> dict:
         }
 
     slot_name = missing[0]
-    profile = get_profile(state.get("routed_to"))
     raw_question = profile.slot_questions.get(
         slot_name,
         f"Please share your {slot_name}.",

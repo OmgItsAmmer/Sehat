@@ -9,7 +9,13 @@ from typing import Any, Literal, cast
 from sqlalchemy.orm import Session
 
 from app.agent.graph import invoke_graph
-from app.agent.state import TriageState, fresh_state, latest_message, merge_state
+from app.agent.state import (
+    TriageState,
+    fresh_state,
+    intake_finished,
+    latest_message,
+    merge_state,
+)
 from app.channels import WEB, WHATSAPP
 from app.services import memory, web_memory, whatsapp
 from app.services.persist import persist_incoming_message, persist_outbound_message
@@ -117,11 +123,7 @@ async def _process_inbound(
             whatsapp.send_text(chat_id=session_id, message=HOLD_REPLY)
         return state
 
-    if (
-        state.get("slots_complete")
-        and not state.get("pending_slot")
-        and not state.get("awaiting_human_review")
-    ):
+    if intake_finished(state):
         clearable = cast(dict[str, Any], state)
         for _field in (
             "priority",
@@ -140,6 +142,8 @@ async def _process_inbound(
     slot_patch = apply_pending_slot_answer(state)
     if slot_patch:
         state = merge_state(state, slot_patch)
+        # Patient answered — do not count prior slot questions toward the gather cap.
+        state["clarification_rounds"] = 0
         for k, v in (slot_patch.get("slots") or {}).items():
             logger.info(
                 "SLOT ANSWER  channel=%-9s %-15s  %s = %r",
