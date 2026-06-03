@@ -31,6 +31,14 @@ def _state_to_case(
 ) -> dict[str, Any]:
     messages = state.get("messages") or []
     slots = state.get("slots") or {}
+    appointment = None
+    if slots.get("appointment_time"):
+        appointment = {
+            "date": slots.get("appointment_date"),
+            "time": slots.get("appointment_time"),
+            "doctor": state.get("routed_to"),
+            "guest_code": state.get("guest_code"),
+        }
     last_activity_at = state.get("last_activity_at")
     if not last_activity_at and messages:
         last_activity_at = datetime.now(UTC).isoformat()
@@ -51,6 +59,9 @@ def _state_to_case(
         "awaiting_human_review": bool(state.get("awaiting_human_review")),
         "source": source,
         "last_activity_at": last_activity_at,
+        "appointment": appointment,
+        "appointment_booked": bool(state.get("appointment_booked")),
+        "guest_code": state.get("guest_code"),
     }
 
 
@@ -74,12 +85,42 @@ def _max_message_at(db_messages: list[dict[str, Any]]) -> str | None:
     return max(valid).isoformat()
 
 
-def _case_from_db_messages(phone: str, db_messages: list[dict[str, Any]]) -> dict[str, Any]:
+def _patient_intake_snapshot(patient: Any) -> dict[str, Any]:
+    """Intake fields persisted on the patient row (survives Redis expiry)."""
+    slots = dict(getattr(patient, "intake_slots", None) or {})
+    return {
+        "slots": slots,
+        "slots_complete": bool(getattr(patient, "slots_complete", False)),
+        "pending_slot": getattr(patient, "pending_slot", None),
+        "routed_to": getattr(patient, "routed_to", None),
+    }
+
+
+def _apply_patient_intake(case: dict[str, Any], patient: Any | None) -> None:
+    """Fill missing live-session intake fields from Postgres."""
+    if patient is None:
+        return
+    snapshot = _patient_intake_snapshot(patient)
+    if not case.get("slots") and snapshot["slots"]:
+        case["slots"] = snapshot["slots"]
+    if not case.get("slots_complete") and snapshot["slots_complete"]:
+        case["slots_complete"] = snapshot["slots_complete"]
+    if case.get("pending_slot") is None and snapshot["pending_slot"]:
+        case["pending_slot"] = snapshot["pending_slot"]
+    if not case.get("routed_to") and snapshot["routed_to"]:
+        case["routed_to"] = snapshot["routed_to"]
+
+
+def _case_from_db_messages(
+    phone: str, db_messages: list[dict[str, Any]], *, patient: Any | None = None
+) -> dict[str, Any]:
     """Build a queue row from persisted WhatsApp messages when Redis session is empty."""
     inbound = [m["body"] for m in db_messages if m.get("direction") == "inbound"]
     outbound = [m["body"] for m in db_messages if m.get("direction") == "outbound"]
     last_inbound = inbound[-1] if inbound else ""
     last_outbound = outbound[-1] if outbound else ""
+    intake = _patient_intake_snapshot(patient) if patient is not None else {}
+    slots = intake.get("slots") or {}
     return {
         "phone": phone,
         "display_name": _display_name(phone),
@@ -87,12 +128,12 @@ def _case_from_db_messages(phone: str, db_messages: list[dict[str, Any]]) -> dic
         "confidence": 0.0,
         "reasoning": "Persisted intake — no live triage session in Redis.",
         "escalated": False,
-        "slots_complete": False,
-        "slots": {},
-        "routed_to": None,
+        "slots_complete": bool(intake.get("slots_complete")),
+        "slots": slots,
+        "routed_to": intake.get("routed_to"),
         "message_count": len(db_messages),
         "last_message": last_inbound,
-        "pending_slot": None,
+        "pending_slot": intake.get("pending_slot"),
         "reply": last_outbound,
         "awaiting_human_review": False,
         "source": "database",
@@ -121,17 +162,22 @@ def _sort_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return cases
 
 
-async def _prune_orphan_sessions(db: Session) -> None:
+async def _prune_orphan_sessions(
+    db: Session,
+    *,
+    phones: list[str],
+    web_sessions: list[str],
+) -> None:
     """Drop Redis/web sessions with no matching patient row — keeps cache aligned with Postgres."""
     from app.models.patient import Patient
 
     db_phones = set(db.scalars(select(Patient.phone)).all())
 
-    for phone in await memory.list_phones():
+    for phone in phones:
         if phone not in db_phones:
             await memory.delete(phone)
 
-    for session_id in await web_memory.list_sessions():
+    for session_id in web_sessions:
         if session_id not in db_phones:
             await web_memory.delete(session_id)
 
@@ -144,17 +190,20 @@ async def clear_all_sessions() -> None:
 
 async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
     """Merge active Redis triage sessions with patients who only exist in Postgres."""
+    phones = await memory.list_phones()
+    web_sessions = await web_memory.list_sessions()
+
     if db is not None:
-        await _prune_orphan_sessions(db)
+        await _prune_orphan_sessions(db, phones=phones, web_sessions=web_sessions)
 
     by_phone: dict[str, dict[str, Any]] = {}
 
-    for phone in await memory.list_phones():
+    for phone in phones:
         state = await memory.load(phone)
         if state.get("messages"):
             by_phone[phone] = _state_to_case(phone, state, source="session")
 
-    for session_id in await web_memory.list_sessions():
+    for session_id in web_sessions:
         state = await web_memory.load(session_id)
         if state.get("messages"):
             by_phone[session_id] = _state_to_case(session_id, state, source="web")
@@ -178,14 +227,21 @@ async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
                     inbound = [m["body"] for m in db_msgs if m["direction"] == "inbound"]
                     if inbound:
                         by_phone[phone]["last_message"] = inbound[-1]
+                _apply_patient_intake(by_phone[phone], patient)
                 _merge_last_activity(by_phone[phone], db_msgs)
             else:
-                by_phone[phone] = _case_from_db_messages(phone, db_msgs)
+                by_phone[phone] = _case_from_db_messages(phone, db_msgs, patient=patient)
 
     return _sort_cases(list(by_phone.values()))
 
 
 async def get_case(phone: str, *, db: Session | None = None) -> dict[str, Any] | None:
+    patient_row = None
+    if db is not None:
+        from app.models.patient import Patient
+
+        patient_row = db.scalar(select(Patient).where(Patient.phone == phone))
+
     if is_web_session_id(phone):
         state = await web_memory.load(phone)
         if state.get("messages"):
@@ -197,6 +253,7 @@ async def get_case(phone: str, *, db: Session | None = None) -> dict[str, Any] |
                 if case["db_messages"]:
                     case["source"] = "both"
                     _merge_last_activity(case, case["db_messages"])
+                _apply_patient_intake(case, patient_row)
             else:
                 case["db_messages"] = []
             return case
@@ -210,6 +267,7 @@ async def get_case(phone: str, *, db: Session | None = None) -> dict[str, Any] |
             case["db_messages"] = list_db_messages(db=db, phone=phone)
             if case["db_messages"]:
                 case["source"] = "both"
+            _apply_patient_intake(case, patient_row)
         else:
             case["db_messages"] = []
         return case
@@ -217,7 +275,7 @@ async def get_case(phone: str, *, db: Session | None = None) -> dict[str, Any] |
     if db is not None:
         db_msgs = list_db_messages(db=db, phone=phone)
         if db_msgs:
-            case = _case_from_db_messages(phone, db_msgs)
+            case = _case_from_db_messages(phone, db_msgs, patient=patient_row)
             case["messages"] = [m["body"] for m in db_msgs if m["direction"] == "inbound"]
             case["clarification_rounds"] = 0
             case["db_messages"] = db_msgs

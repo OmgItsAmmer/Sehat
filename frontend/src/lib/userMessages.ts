@@ -13,8 +13,12 @@ export const BACKEND_OFFLINE =
   "Unable to reach the clinic server. Please contact your administrator if this continues.";
 
 export const LOADING_QUEUE = "Loading patient queue…";
+export const LOADING_DASHBOARD = "Connecting to clinic server…";
 export const LOADING_CASE = "Loading conversation…";
+export const REQUEST_TIMEOUT =
+  "The clinic server is taking too long to respond. Please try again in a moment.";
 export const NO_MESSAGES = "No messages recorded for this patient yet.";
+export const EMPTY_INTAKE_SLOTS = "No intake details yet — the agent will show answers here as the patient responds.";
 
 const DETAIL_MAP: [RegExp | string, string][] = [
   [/Case not found/i, "This patient case is no longer active."],

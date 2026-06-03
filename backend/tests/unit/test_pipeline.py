@@ -84,3 +84,15 @@ async def test_upgrade_override_resumes_and_replies(
     stored = await memory.load(chat)
     assert stored.get("awaiting_human_review") is False
     assert stored.get("human_review_resolved") is True
+
+
+@patch("app.services.pipeline.invoke_graph")
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
+async def test_clinic_context_attached_before_graph(mock_send, mock_invoke) -> None:
+    mock_invoke.side_effect = lambda s: {**s, "reply": "Clinic 9am se 11pm tak khuli hai."}
+    chat = "79009999999@c.us"
+    await pipeline.process_inbound(chat_id=chat, body="clinic timing kya hai")
+
+    call_state = mock_invoke.call_args[0][0]
+    assert call_state.get("clinic_context")
+    mock_send.assert_called_once()

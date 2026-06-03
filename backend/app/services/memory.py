@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import time
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -16,11 +18,15 @@ logger = logging.getLogger(__name__)
 
 SESSION_TTL_SECONDS = 86400
 SESSION_KEY_PREFIX = "session:"
+REDIS_SOCKET_CONNECT_TIMEOUT = 1.0
+REDIS_SOCKET_TIMEOUT = 1.0
+REDIS_UNAVAILABLE_COOLDOWN_SECONDS = 30.0
 
 # Used when REDIS_URL is empty (CI, local smoke tests without Docker).
 _FALLBACK: dict[str, str] = {}
 
 _redis_client: aioredis.Redis | None = None
+_redis_disabled_until: float = 0.0
 
 
 def is_redis_configured() -> bool:
@@ -43,14 +49,33 @@ def loads(phone: str, raw: str) -> TriageState:
 
 
 async def get_redis() -> aioredis.Redis | None:
-    """Shared async Redis client (None when Redis is not configured)."""
+    """Shared async Redis client (None when Redis is not configured or unavailable)."""
     global _redis_client
+    if time.monotonic() < _redis_disabled_until:
+        return None
     if _redis_client is not None:
         return _redis_client
     if not is_redis_configured():
         return None
-    _redis_client = aioredis.from_url(settings.redis_url, decode_responses=True)
-    return _redis_client
+    try:
+        client = aioredis.from_url(
+            settings.redis_url,
+            decode_responses=True,
+            socket_connect_timeout=REDIS_SOCKET_CONNECT_TIMEOUT,
+            socket_timeout=REDIS_SOCKET_TIMEOUT,
+            retry_on_timeout=False,
+        )
+        await asyncio.wait_for(client.ping(), timeout=REDIS_SOCKET_CONNECT_TIMEOUT)
+        _redis_client = client
+        return _redis_client
+    except Exception:
+        logger.warning(
+            "Redis unavailable — using in-memory fallback for %.0fs",
+            REDIS_UNAVAILABLE_COOLDOWN_SECONDS,
+        )
+        _mark_redis_unavailable()
+        await _invalidate_redis()
+        return None
 
 
 async def close_redis() -> None:
@@ -73,6 +98,17 @@ async def _invalidate_redis() -> None:
     _redis_client = None
 
 
+def _mark_redis_unavailable() -> None:
+    global _redis_disabled_until
+    _redis_disabled_until = time.monotonic() + REDIS_UNAVAILABLE_COOLDOWN_SECONDS
+
+
+def reset_redis_circuit_breaker() -> None:
+    """Test helper — allow Redis retries immediately."""
+    global _redis_disabled_until
+    _redis_disabled_until = 0.0
+
+
 def use_redis_client(client: aioredis.Redis | None) -> None:
     """Test helper — inject a FakeRedis instance."""
     global _redis_client
@@ -92,6 +128,7 @@ async def load(phone: str) -> TriageState:
             return fresh_state(phone)
         except Exception:
             logger.warning("Redis load failed for %s — using in-memory fallback", phone)
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     raw = _FALLBACK.get(key)
@@ -114,6 +151,7 @@ async def save(phone: str, state: TriageState) -> None:
             return
         except Exception:
             logger.warning("Redis save failed for %s — using in-memory fallback", phone)
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     _FALLBACK[key] = payload
@@ -161,6 +199,7 @@ async def list_phones() -> list[str]:
             return sorted(phones)
         except Exception:
             logger.warning("Redis list_phones failed — using in-memory fallback")
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     for key in _FALLBACK:

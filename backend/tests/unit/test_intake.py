@@ -68,7 +68,32 @@ async def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> Non
     assert not first["slots_complete"]
 
     mock_classify.reset_mock()
-    second = await intake.process_incoming_message(chat_id=chat, body="lower back, one week")
-    assert second["slots"].get("chief_complaint") == "lower back, one week"
-    assert second.get("pending_slot") in ("symptom_duration", None)
+    second = await intake.process_incoming_message(chat_id=chat, body="lower back pain")
+    assert second["slots"].get("chief_complaint") == "lower back pain"
+    assert second.get("pending_slot") == "symptom_duration"
     assert mock_send.call_count == 2
+
+
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
+@patch("app.agent.nodes.compose_reply", return_value="Theek hai, reception confirm karegi.")
+@patch("app.agent.nodes.classify_message_with_openai")
+async def test_post_intake_time_not_oos(mock_classify, _mock_compose, _mock_send) -> None:
+    """After intake is done, a time-only message must not trigger OOS redirect."""
+    mock_classify.return_value = TriageResult(
+        priority="P3",
+        confidence=0.9,
+        reasoning="Routine.",
+    )
+    chat = "79009998877@c.us"
+    await intake.process_incoming_message(chat_id=chat, body="headache for 2 days")
+    await intake.process_incoming_message(chat_id=chat, body="headache")
+    await intake.process_incoming_message(chat_id=chat, body="2 din")
+    await intake.process_incoming_message(chat_id=chat, body="03001234567")
+    await intake.process_incoming_message(chat_id=chat, body="Thursday")
+    await intake.process_incoming_message(chat_id=chat, body="nahi")
+    done = await intake.process_incoming_message(chat_id=chat, body="11:30pm")
+
+    assert done.get("intake_confirmed") is True
+    assert done["slots"].get("preferred_time") == "11:30pm"
+    assert "reception desk" not in (done.get("reply") or "").lower()
+    mock_classify.assert_called_once()

@@ -1,4 +1,4 @@
-import { friendlyApiError } from "@/lib/userMessages";
+import { friendlyApiError, REQUEST_TIMEOUT } from "@/lib/userMessages";
 import type {
   Analytics,
   CaseDetail,
@@ -22,18 +22,32 @@ function resolveApiBase(): string {
 }
 
 const API_BASE = resolveApiBase();
+const REQUEST_TIMEOUT_MS = 15_000;
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${API_BASE}${path}`;
-  const res = await fetch(url, {
-    ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(friendlyApiError(text || `${res.status} ${res.statusText}`));
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...init?.headers },
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(friendlyApiError(text || `${res.status} ${res.statusText}`));
+    }
+    return res.json() as Promise<T>;
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") {
+      throw new Error(REQUEST_TIMEOUT);
+    }
+    throw e;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
-  return res.json() as Promise<T>;
 }
 
 export const api = {

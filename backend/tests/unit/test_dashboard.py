@@ -79,6 +79,36 @@ async def test_list_cases_prunes_redis_when_patient_not_in_db(db_session) -> Non
     assert not (await memory.load(phone)).get("messages")
 
 
+@patch("app.agent.nodes.classify_message_with_openai")
+async def test_get_case_includes_persisted_slots_when_redis_expired(
+    mock_classify, db_session
+) -> None:
+    from app.agent.triage import TriageResult
+
+    mock_classify.return_value = TriageResult(
+        priority="P3",
+        confidence=0.9,
+        reasoning="Routine.",
+    )
+    phone = "79005556677@c.us"
+    await pipeline.process_whatsapp_inbound(
+        chat_id=phone,
+        body="appointment for back pain",
+        db=db_session,
+    )
+    await pipeline.process_whatsapp_inbound(
+        chat_id=phone,
+        body="lower back pain",
+        db=db_session,
+    )
+    await memory.delete(phone)
+
+    case = await dashboard.get_case(phone, db=db_session)
+    assert case is not None
+    assert case["slots"].get("chief_complaint") == "lower back pain"
+    assert case["source"] == "database"
+
+
 async def test_get_case_from_database_when_no_redis_session(db_session) -> None:
     await memory.clear_all()
     phone = "79001112233@c.us"
