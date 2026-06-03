@@ -113,3 +113,20 @@ async def clear_all() -> None:
         return
     async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
         await client.delete(key)
+
+
+async def list_phones() -> list[str]:
+    """All chat ids with stored session state (Redis scan or in-memory keys)."""
+    client = await get_redis()
+    phones: list[str] = []
+    prefix_len = len(SESSION_KEY_PREFIX)
+
+    if client is not None:
+        async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
+            phones.append(key[prefix_len:])
+        return sorted(phones)
+
+    for key in _FALLBACK:
+        if key.startswith(SESSION_KEY_PREFIX):
+            phones.append(key[prefix_len:])
+    return sorted(phones)

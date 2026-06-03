@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sehat | Clinic Analytics Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "primary-fixed-dim": "#84d4d3",
+                "on-tertiary-fixed": "#2a1700",
+                "surface-container-high": "#dce9ff",
+                "surface-container": "#e5eeff",
+                "on-surface-variant": "#3e4948",
+                "surface-container-lowest": "#ffffff",
+                "surface-tint": "#016a6a",
+                "surface": "#f8f9ff",
+                "primary-fixed": "#a0f0f0",
+                "on-tertiary": "#ffffff",
+                "tertiary": "#6a4200",
+                "on-secondary-fixed": "#410002",
+                "surface-dim": "#cbdbf5",
+                "error": "#ba1a1a",
+                "on-tertiary-container": "#ffd9ae",
+                "tertiary-fixed": "#ffddb8",
+                "on-primary-container": "#9dedec",
+                "on-primary-fixed-variant": "#004f50",
+                "background": "#f8f9ff",
+                "surface-variant": "#d3e4fe",
+                "primary": "#005454",
+                "on-primary": "#ffffff",
+                "secondary-fixed": "#ffdad6",
+                "on-tertiary-fixed-variant": "#653e00",
+                "inverse-on-surface": "#eaf1ff",
+                "surface-container-highest": "#d3e4fe",
+                "on-secondary": "#ffffff",
+                "on-background": "#0b1c30",
+                "error-container": "#ffdad6",
+                "secondary-container": "#e02928",
+                "on-secondary-container": "#fffbff",
+                "tertiary-container": "#8b5700",
+                "secondary": "#bb0112",
+                "secondary-fixed-dim": "#ffb4ab",
+                "on-secondary-fixed-variant": "#93000b",
+                "on-surface": "#0b1c30",
+                "on-primary-fixed": "#002020",
+                "tertiary-fixed-dim": "#ffb95f",
+                "primary-container": "#0d6e6e",
+                "surface-bright": "#f8f9ff",
+                "on-error-container": "#93000a",
+                "outline-variant": "#bec9c8",
+                "on-error": "#ffffff",
+                "inverse-primary": "#84d4d3",
+                "inverse-surface": "#213145",
+                "outline": "#6e7979",
+                "surface-container-low": "#eff4ff"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "container-padding": "24px",
+                "unit": "4px",
+                "touch-target-min": "48px",
+                "gutter": "16px",
+                "margin-mobile": "16px"
+            },
+            "fontFamily": {
+                "body-lg": ["Inter"],
+                "display-lg": ["Plus Jakarta Sans"],
+                "headline-lg": ["Plus Jakarta Sans"],
+                "mono-clinical": ["Inter"],
+                "label-md": ["Inter"],
+                "headline-md": ["Plus Jakarta Sans"],
+                "body-md": ["Inter"],
+                "title-lg": ["Inter"]
+            },
+            "fontSize": {
+                "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                "mono-clinical": ["13px", {"lineHeight": "18px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                "title-lg": ["18px", {"lineHeight": "28px", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f8f9ff;
+            color: #0b1c30;
+            overflow-x: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-grid {
+            background-image: radial-gradient(#6e797933 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .p1-highlight {
+            background-color: rgba(187, 1, 18, 0.05);
+            border-left: 4px solid #bb0112;
+        }
+        /* Custom scrollbar for high-density tables */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #bec9c8; border-radius: 10px; }
+    </style>
+</head>
+<body class="font-body-lg text-body-lg">
+<!-- TopNavBar (Shared Component) -->
+<header class="flex justify-between items-center px-container-padding h-16 w-full sticky top-0 z-50 bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="font-headline-md text-headline-md font-bold text-primary">Sehat | صحت</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-on-surface-variant hover:text-primary font-body-md" href="#">Dashboard</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 font-body-md" href="#">Analytics</a>
+<a class="text-on-surface-variant hover:text-primary font-body-md" href="#">Case Logs</a>
+<a class="text-on-surface-variant hover:text-primary font-body-md" href="#">Settings</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:bg-surface-container-low transition-colors rounded-full">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="Clinic administrator profile" data-alt="A professional studio headshot of a clinic administrator in their 40s, wearing clean business casual attire with a stethoscope subtly visible around the neck. The background is a blurred high-end medical facility with soft teal accents. The lighting is bright and airy, matching a light-mode UI aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtFHzlT4Hte_zJtOaidXkIvT3tnsJYXZvsDSScssW7bdLhmgdfPcLqLyNqNVceOmU4_HyowBFVsRNd3XPsbktgM3TvJqPfPZo8XymzDzZ1qEjm3YP_T6RDPcu5LqfEz_P5CIM6lbjxRpEud2b8uVg091Yz8f-WwuGxDwIjRl77J9tjC-leZBYH_mz8tECK1-zvAuOqK-0sE2vsSG4Cc93uRb09Hf5dMmrUHb5sH6txdmgk0j7KH3n5znIwc9mNDZQSnAb-_FnMvKAn"/>
+</div>
+</div>
+</header>
+<div class="flex h-[calc(100vh-64px)] overflow-hidden">
+<!-- SideNavBar (Shared Component) -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] flex flex-col p-4 z-40 bg-surface-container-low border-r border-outline-variant w-64">
+<div class="mb-8 px-2">
+<p class="font-title-lg text-title-lg font-bold text-primary">Clinic Analytics</p>
+<p class="font-label-md text-label-md text-on-surface-variant">Triage Bot Monitor</p>
+</div>
+<div class="flex flex-col gap-1 flex-grow">
+<!-- Analytics maps to Performance as primary intent -->
+<button class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-xl transition-all scale-100 active:scale-95">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+<span class="font-label-md text-label-md">Performance</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-label-md text-label-md">Volume</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md">Automation</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="transfer_within_a_station">transfer_within_a_station</span>
+<span class="font-label-md text-label-md">Overrides</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+<span class="font-label-md text-label-md">Reports</span>
+</button>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-4 flex flex-col gap-1">
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-label-md text-label-md">Help Center</span>
+</button>
+<button class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high rounded-xl transition-all">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-label-md text-label-md">Log Out</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 flex-grow overflow-y-auto p-container-padding space-y-gutter">
+<div class="flex justify-between items-end mb-4">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-background">System Performance Overview</h1>
+<p class="font-body-md text-on-surface-variant">Real-time triage diagnostics and human intervention metrics.</p>
+</div>
+<div class="flex gap-2">
+<div class="bg-surface border border-outline-variant rounded-xl px-4 py-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="calendar_today">calendar_today</span>
+<span class="font-label-md text-label-md">Last 24 Hours</span>
+</div>
+</div>
+</div>
+<!-- Dashboard Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Metric Cluster 1: Response Speed -->
+<div class="col-span-12 lg:col-span-5 bg-surface border border-outline-variant rounded-xl p-6 flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Avg. Response Speed</p>
+<h2 class="font-display-lg text-display-lg text-primary mt-2">1:42m</h2>
+<div class="flex items-center gap-2 mt-1">
+<span class="flex h-2 w-2 rounded-full bg-primary-container animate-pulse"></span>
+<span class="font-mono-clinical text-primary font-bold">Target &lt; 2:00m</span>
+</div>
+</div>
+<div class="text-right">
+<span class="bg-primary-fixed text-on-primary-fixed px-2 py-1 rounded font-label-md">-12s vs avg</span>
+</div>
+</div>
+<!-- Sparkline SVG -->
+<div class="mt-8 h-24 w-full">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 400 100">
+<path d="M0,80 Q50,90 100,60 T200,40 T300,70 T400,30" fill="none" stroke="#005454" stroke-linecap="round" stroke-width="3"></path>
+<path d="M0,80 Q50,90 100,60 T200,40 T300,70 T400,30 L400,100 L0,100 Z" fill="url(#grad1)" opacity="0.1"></path>
+<defs>
+<lineargradient id="grad1" x1="0%" x2="0%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#005454;stop-opacity:1"></stop>
+<stop offset="100%" style="stop-color:#005454;stop-opacity:0"></stop>
+</lineargradient>
+</defs>
+<circle cx="400" cy="30" fill="#005454" r="4"></circle>
+</svg>
+<div class="flex justify-between font-label-md text-on-surface-variant mt-2">
+<span>7 Days Ago</span>
+<span>Today</span>
+</div>
+</div>
+</div>
+<!-- Metric Cluster 2: Volume Handled (Donut) -->
+<div class="col-span-12 lg:col-span-7 bg-surface border border-outline-variant rounded-xl p-6">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-6">Case Volume Distribution</p>
+<div class="flex items-center justify-around h-full py-4">
+<div class="relative w-48 h-48">
+<!-- SVG Donut -->
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#e5eeff" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#bb0112" stroke-dasharray="15 85" stroke-dashoffset="25" stroke-width="4"></circle> <!-- P1 -->
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#8b5700" stroke-dasharray="25 75" stroke-dashoffset="10" stroke-width="4"></circle> <!-- P2 -->
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#005454" stroke-dasharray="60 40" stroke-dashoffset="-15" stroke-width="4"></circle> <!-- P3/OOS -->
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="font-headline-lg text-headline-lg text-on-background">1,402</span>
+<span class="font-label-md text-on-surface-variant">Total Cases</span>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-secondary"></span>
+<span class="font-body-md text-on-surface w-24">P1 Critical</span>
+<span class="font-mono-clinical font-bold">15%</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-tertiary-container"></span>
+<span class="font-body-md text-on-surface w-24">P2 Urgent</span>
+<span class="font-mono-clinical font-bold">25%</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-primary"></span>
+<span class="font-body-md text-on-surface w-24">P3 Routine</span>
+<span class="font-mono-clinical font-bold">52%</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="w-3 h-3 rounded-full bg-outline-variant"></span>
+<span class="font-body-md text-on-surface w-24">Other</span>
+<span class="font-mono-clinical font-bold">8%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Metric Cluster 3: Automation Rate -->
+<div class="col-span-12 lg:col-span-6 bg-surface border border-outline-variant rounded-xl p-6">
+<div class="flex justify-between items-center mb-6">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Automation Success Rate</p>
+<span class="material-symbols-outlined text-primary" data-icon="smart_toy">smart_toy</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-end gap-4">
+<h2 class="font-display-lg text-display-lg text-on-background leading-none">78%</h2>
+<p class="font-body-md text-on-surface-variant mb-1">Handled autonomously</p>
+</div>
+<div class="w-full bg-surface-container-high h-4 rounded-full overflow-hidden relative">
+<div class="bg-primary h-full rounded-full" style="width: 78%"></div>
+<div class="absolute top-0 bottom-0 left-[80%] border-l-2 border-dashed border-secondary h-full z-10" title="Target: 80%"></div>
+</div>
+<div class="flex justify-between font-label-md">
+<span class="text-on-surface-variant">Current Performance</span>
+<span class="text-secondary font-bold">80% Target</span>
+</div>
+</div>
+</div>
+<!-- Metric Cluster 4: Human Overrides -->
+<div class="col-span-12 lg:col-span-6 bg-surface border border-outline-variant rounded-xl p-6">
+<p class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-4">Manual Priority Overrides</p>
+<div class="flex gap-6 h-32 items-end mb-4">
+<div class="flex-grow flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed-dim rounded-t h-[60%] hover:bg-primary transition-colors cursor-pointer" title="General: 42"></div>
+<span class="font-label-md text-[10px]">General</span>
+</div>
+<div class="flex-grow flex flex-col items-center gap-2">
+<div class="w-full bg-primary rounded-t h-[95%] hover:bg-primary-container transition-colors cursor-pointer" title="Cardiology: 88"></div>
+<span class="font-label-md text-[10px]">Cardiology</span>
+</div>
+<div class="flex-grow flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed-dim rounded-t h-[40%] hover:bg-primary transition-colors cursor-pointer" title="Pediatrics: 28"></div>
+<span class="font-label-md text-[10px]">Pediatrics</span>
+</div>
+<div class="flex-grow flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed-dim rounded-t h-[30%] hover:bg-primary transition-colors cursor-pointer" title="Neurology: 15"></div>
+<span class="font-label-md text-[10px]">Neurology</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-3 rounded-xl border border-outline-variant flex items-start gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="lightbulb">lightbulb</span>
+<p class="font-body-md text-on-surface">
+<span class="font-bold">Recommendation:</span> Cardiology cases upgraded most often — consider adjusting threshold.
+                        </p>
+</div>
+</div>
+<!-- Metric Cluster 5: Recent Case Log Table -->
+<div class="col-span-12 bg-surface border border-outline-variant rounded-xl overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<p class="font-title-lg text-title-lg text-on-background">Live Case Logs</p>
+<button class="flex items-center gap-2 px-4 py-2 border border-outline text-primary rounded-full hover:bg-surface-container transition-colors font-label-md">
+<span class="material-symbols-outlined text-[20px]" data-icon="filter_list">filter_list</span>
+                            Filter Logs
+                        </button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low">
+<tr>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Time</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Patient Name</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Initial Class</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Final Class</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider text-center">Overridden</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Resolution</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-wider">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant">
+<!-- P1 Highlighted Row -->
+<tr class="p1-highlight hover:bg-opacity-10 transition-colors">
+<td class="px-6 py-4 font-mono-clinical">14:22:01</td>
+<td class="px-6 py-4 font-body-md font-bold">Sarah Jenkins</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span> P2</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span> P1</span></td>
+<td class="px-6 py-4 text-center"><span class="text-secondary font-bold">YES</span></td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">ER Admission</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-mono-clinical text-on-surface-variant">14:19:45</td>
+<td class="px-6 py-4 font-body-md">David Miller</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4 text-center text-on-surface-variant">NO</td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">Scheduled Consult</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-mono-clinical text-on-surface-variant">14:15:10</td>
+<td class="px-6 py-4 font-body-md">Emily Chen</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4 text-center text-on-surface-variant">NO</td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">Bot Handled</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+<!-- Zebra striping for readability as per system -->
+<tr class="bg-surface-container-low/30 hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-mono-clinical text-on-surface-variant">14:12:33</td>
+<td class="px-6 py-4 font-body-md">Marcus Thorne</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span> P2</span></td>
+<td class="px-6 py-4 text-center"><span class="text-primary font-bold">YES</span></td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">Clinic Referral</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="px-6 py-4 font-mono-clinical text-on-surface-variant">14:08:50</td>
+<td class="px-6 py-4 font-body-md">Aria Varma</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> P3</span></td>
+<td class="px-6 py-4 text-center text-on-surface-variant">NO</td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">Bot Handled</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+<tr class="p1-highlight hover:bg-opacity-10 transition-colors">
+<td class="px-6 py-4 font-mono-clinical">14:05:22</td>
+<td class="px-6 py-4 font-body-md font-bold">Robert Stark</td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> P1</span></td>
+<td class="px-6 py-4"><span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> P1</span></td>
+<td class="px-6 py-4 text-center text-on-surface-variant">NO</td>
+<td class="px-6 py-4 text-on-surface-variant font-body-md">Emergency Dispatched</td>
+<td class="px-6 py-4"><button class="text-primary hover:underline font-label-md">View details</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low flex justify-center">
+<button class="text-primary font-bold font-label-md flex items-center gap-2 hover:opacity-80">
+                            Load 50 More Logs
+                            <span class="material-symbols-outlined text-[18px]" data-icon="keyboard_arrow_down">keyboard_arrow_down</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simple hover effect for table rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.cursor = 'pointer';
+            });
+        });
+
+        // Atmosphere Effect: Pulse current target
+        setInterval(() => {
+            const pulse = document.querySelector('.animate-pulse');
+            if (pulse) {
+                pulse.style.opacity = pulse.style.opacity === '1' ? '0.4' : '1';
+            }
+        }, 1000);
+    </script>
+</body></html>

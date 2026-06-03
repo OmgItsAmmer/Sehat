@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sehat P1 Emergency Alert</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: 1;
+        }
+        .pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        body {
+            background-color: #F8F9FA;
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          theme: {
+            extend: {
+              colors: {
+                "secondary-container": "#e02928",
+                "inverse-primary": "#84d4d3",
+                "surface-tint": "#016a6a",
+                "outline-variant": "#bec9c8",
+                "on-secondary": "#ffffff",
+                "primary-container": "#0d6e6e",
+                "on-primary-container": "#9dedec",
+                "surface-container-lowest": "#ffffff",
+                "on-surface-variant": "#3e4948",
+                "on-primary-fixed": "#002020",
+                "tertiary": "#6a4200",
+                "tertiary-container": "#8b5700",
+                "outline": "#6e7979",
+                "error": "#ba1a1a",
+                "inverse-surface": "#213145",
+                "on-tertiary-container": "#ffd9ae",
+                "tertiary-fixed": "#ffddb8",
+                "background": "#f8f9ff",
+                "tertiary-fixed-dim": "#ffb95f",
+                "surface-dim": "#cbdbf5",
+                "surface-container-high": "#dce9ff",
+                "secondary": "#bb0112",
+                "on-background": "#0b1c30",
+                "secondary-fixed-dim": "#ffb4ab",
+                "secondary-fixed": "#ffdad6",
+                "surface-variant": "#d3e4fe",
+                "surface-container-low": "#eff4ff",
+                "on-primary-fixed-variant": "#004f50",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "surface": "#f8f9ff",
+                "on-secondary-fixed-variant": "#93000b",
+                "inverse-on-surface": "#eaf1ff",
+                "error-container": "#ffdad6",
+                "on-primary": "#ffffff",
+                "surface-container": "#e5eeff",
+                "primary": "#005454",
+                "on-surface": "#0b1c30",
+                "primary-fixed": "#a0f0f0",
+                "on-tertiary": "#ffffff",
+                "primary-fixed-dim": "#84d4d3",
+                "on-secondary-fixed": "#410002",
+                "on-tertiary-fixed-variant": "#653e00",
+                "on-secondary-container": "#fffbff",
+                "surface-container-highest": "#d3e4fe",
+                "surface-bright": "#f8f9ff",
+                "on-tertiary-fixed": "#2a1700"
+              },
+              fontFamily: {
+                "title-lg": ["Inter"],
+                "body-lg": ["Inter"],
+                "headline-md": ["Plus Jakarta Sans"],
+                "body-md": ["Inter"],
+                "label-md": ["Inter"],
+                "headline-lg": ["Plus Jakarta Sans"],
+                "mono-clinical": ["Inter"]
+              }
+            }
+          }
+        }
+      </script>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+<!-- Slack Channel Simulation Container (Contextual) -->
+<div class="w-full max-w-[700px] p-6 bg-white border border-slate-200 rounded-lg shadow-sm">
+<div class="flex gap-3 mb-4">
+<div class="w-9 h-9 bg-primary-container rounded flex items-center justify-center text-on-primary-container shrink-0">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">medical_services</span>
+</div>
+<div>
+<div class="flex items-center gap-2">
+<span class="font-bold text-on-surface text-[15px]">Sehat AI Triage</span>
+<span class="bg-slate-100 text-slate-500 text-[11px] px-1 rounded font-bold uppercase tracking-tighter">APP</span>
+<span class="text-slate-400 text-[12px]">12:44 PM</span>
+</div>
+<!-- THE P1 MESSAGE CARD -->
+<div class="mt-2 max-w-[600px] bg-white border border-slate-200 rounded-[4px] overflow-hidden shadow-sm pulse-red">
+<!-- 1. Header: Solid Red Background -->
+<div class="bg-secondary-container px-4 py-2 flex items-center gap-2">
+<span class="text-white font-bold text-[15px]">🚨 P1 EMERGENCY — Immediate action required</span>
+</div>
+<div class="p-4 space-y-4">
+<!-- 2. Patient Row -->
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-bold text-on-surface text-[16px]">Zainab Ahmed</span>
+<div class="flex items-center gap-2 mt-1">
+<a class="text-primary font-medium text-[14px] hover:underline flex items-center gap-1" href="tel:+923001234567">
+<span class="material-symbols-outlined text-[16px]">call</span>
+                                        +92 300 1234567
+                                    </a>
+<button class="p-1 hover:bg-slate-100 rounded transition-colors" title="Message on WhatsApp">
+<span class="material-symbols-outlined text-green-600 text-[18px]">chat</span>
+</button>
+</div>
+</div>
+<div class="shrink-0">
+<img alt="Patient Avatar" class="w-10 h-10 rounded-full border border-slate-100" data-alt="A professional medical profile avatar of a woman with a calm expression, wearing a neutral colored headscarf. The background is a clean, solid light blue. The lighting is soft and studio-quality, maintaining a high-end clinical aesthetic with high-contrast utility and absolute clarity." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJ4sZW9LkBJFVm13J-NOZcF1_elhUiObz6ZmX6uSgQ0o1p52ze4Y5e4xLEWoDRX3T91gDOndZdEWovkROuFsZXhMU8rJRkktBOjYwIuwK8kppl28lnQE3FBPGYTBsKhIB4zI8IKmJ-2e8cgmh1fBvkRmD9js3kq_lTSHS2U0IB-ICjkhvLkLw40P23CV8-IH2BrBN2CVudXc3WHyLJz89cWu8Mttsbo8NHOzR3enU1exXapRtLYwgv2atvA9To3osdw8ff-GkAjS90"/>
+</div>
+</div>
+<!-- 3. Symptoms -->
+<div class="bg-surface-container-low p-3 rounded border-l-4 border-secondary">
+<span class="text-on-surface text-[14px] leading-relaxed">
+                                "Severe chest pain radiating to left arm and shortness of breath."
+                            </span>
+</div>
+<!-- 4. Elapsed Time -->
+<div>
+<span class="text-secondary font-bold text-[14px] flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">timer</span>
+                                Message received 4 minutes ago
+                            </span>
+</div>
+<!-- 5. AI Classification Badge -->
+<div class="flex items-center gap-2">
+<div class="flex items-center gap-1.5 px-2 py-1 bg-surface-container-highest rounded text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+<span class="text-[12px] font-medium">Cardiac concern — confidence 94%</span>
+</div>
+</div>
+<!-- 6. Action Buttons -->
+<div class="flex flex-wrap gap-2 pt-2">
+<button class="h-9 px-4 bg-secondary-container hover:bg-red-700 text-white font-bold text-[13px] rounded-[4px] shadow-sm transition-all active:scale-95 flex items-center gap-1">
+                                Call Now 📞
+                            </button>
+<button class="h-9 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-on-surface font-bold text-[13px] rounded-[4px] shadow-sm transition-all active:scale-95 flex items-center gap-1">
+                                Mark Handled ✓
+                            </button>
+<button class="h-9 px-4 bg-white border border-slate-300 hover:bg-slate-50 text-on-surface font-bold text-[13px] rounded-[4px] shadow-sm transition-all active:scale-95">
+                                Downgrade to P2
+                            </button>
+</div>
+</div>
+<!-- 7. Footer -->
+<div class="px-4 py-2 bg-slate-50 border-t border-slate-100 flex justify-between items-center">
+<span class="text-slate-500 text-[12px]">Sehat AI Triage · Do not ignore P1 alerts</span>
+<span class="material-symbols-outlined text-slate-300 text-[16px]">info</span>
+</div>
+</div>
+<!-- END OF MESSAGE CARD -->
+</div>
+</div>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const originalText = this.innerHTML;
+                if (this.innerText.includes('Mark Handled')) {
+                    this.innerHTML = '<span class="material-symbols-outlined animate-spin text-[16px]">sync</span> Updating...';
+                    this.disabled = true;
+                    setTimeout(() => {
+                        const card = this.closest('.pulse-red');
+                        card.style.transition = 'all 0.5s ease';
+                        card.style.opacity = '0.5';
+                        card.style.transform = 'scale(0.98)';
+                        this.innerHTML = 'Handled ✓';
+                    }, 800);
+                }
+            });
+        });
+    </script>
+</body></html>
