@@ -22,13 +22,16 @@ def _route_after_classify(state: TriageState) -> str:
         return "emergency_exit"
     if priority == "OOS":
         return "oos_exit"
-    return "slot_check"
+    return "route"
 
 
 def _route_after_slot_check(state: TriageState) -> str:
-    if state.get("slots_complete"):
-        return "route"
-    return "gather_slots"
+    if not state.get("slots_complete"):
+        return "gather_slots"
+    priority = state.get("priority")
+    if state.get("escalated") or priority in ("P1", "P2"):
+        return "notify_human"
+    return "confirm_user"
 
 
 def _route_after_gather_slots(state: TriageState) -> str:
@@ -36,13 +39,6 @@ def _route_after_gather_slots(state: TriageState) -> str:
     if state.get("slots_complete"):
         return "slot_check"
     return "__end__"
-
-
-def _route_after_route(state: TriageState) -> str:
-    priority = state.get("priority")
-    if state.get("escalated") or priority in ("P1", "P2"):
-        return "notify_human"
-    return "confirm_user"
 
 
 def build_graph() -> StateGraph:
@@ -70,25 +66,25 @@ def build_graph() -> StateGraph:
         {
             "emergency_exit": "emergency_exit",
             "oos_exit": "oos_exit",
-            "slot_check": "slot_check",
+            "route": "route",
         },
     )
+    builder.add_edge("route", "slot_check")
     builder.add_edge("emergency_exit", "notify_human")
     builder.add_edge("oos_exit", "confirm_user")
     builder.add_conditional_edges(
         "slot_check",
         _route_after_slot_check,
-        {"route": "route", "gather_slots": "gather_slots"},
+        {
+            "gather_slots": "gather_slots",
+            "notify_human": "notify_human",
+            "confirm_user": "confirm_user",
+        },
     )
     builder.add_conditional_edges(
         "gather_slots",
         _route_after_gather_slots,
         {"slot_check": "slot_check", "__end__": END},
-    )
-    builder.add_conditional_edges(
-        "route",
-        _route_after_route,
-        {"notify_human": "notify_human", "confirm_user": "confirm_user"},
     )
     builder.add_edge("notify_human", "confirm_user")
     builder.add_edge("confirm_user", END)

@@ -8,19 +8,19 @@ import pytest
 from app.services import memory
 from fastapi.testclient import TestClient
 
-pytestmark = pytest.mark.integration
+pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
 @pytest.fixture(autouse=True)
-def _clear_memory() -> None:
-    memory.clear_all()
+async def _clear_memory() -> None:
+    await memory.clear_all()
     yield
-    memory.clear_all()
+    await memory.clear_all()
 
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
-def test_webhook_p1_runs_graph_and_replies(
+async def test_webhook_p1_runs_graph_and_replies(
     _mock_slack,
     mock_send,
     client: TestClient,
@@ -33,13 +33,13 @@ def test_webhook_p1_runs_graph_and_replies(
     mock_send.assert_called_once()
     assert "1122" in mock_send.call_args.kwargs["message"]
 
-    state = memory.load("79001234567@c.us")
+    state = await memory.load("79001234567@c.us")
     assert state["priority"] == "P1"
 
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.classify_message_with_gemini")
-def test_webhook_oos_scenario(
+async def test_webhook_oos_scenario(
     mock_classify,
     mock_send,
     client: TestClient,
@@ -60,7 +60,7 @@ def test_webhook_oos_scenario(
 
 
 @patch("app.services.intake.whatsapp.send_text", return_value=True)
-def test_webhook_non_message_still_ok(mock_send, client: TestClient) -> None:
+async def test_webhook_non_message_still_ok(mock_send, client: TestClient) -> None:
     payload = {"typeWebhook": "stateInstanceChanged", "stateInstance": "authorized"}
     response = client.post("/api/whatsapp/webhook", json=payload)
     assert response.status_code == 200

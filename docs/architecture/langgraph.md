@@ -31,16 +31,16 @@ flowchart TD
     ingress -->|P2/P3 slots pending| slot_check[slot_check]
     classify -->|P1| emergency[emergency_exit]
     classify -->|OOS| oos[oos_exit]
-    classify -->|P2/P3| slot_check[slot_check]
+    classify -->|P2/P3| route[route specialist]
+    route --> slot_check[slot_check]
     emergency --> notify[notify_human]
     notify --> confirm[confirm_user]
     oos --> confirm
-    slot_check -->|slots complete| route[route]
+    slot_check -->|slots complete| notify
+    slot_check -->|slots complete P3| confirm
     slot_check -->|missing slots| gather[gather_slots]
     gather -->|question asked| END1([END pause])
     gather -->|forced complete| slot_check
-    route -->|P1/P2 or escalated| notify
-    route -->|P3 calm| confirm
     confirm --> END2([END])
 ```
 
@@ -68,7 +68,7 @@ State is a `typing_extensions.TypedDict` (required on Python 3.11 with Pydantic/
 | `pending_slot` | Slot name the bot is waiting for (filled on next inbound message) |
 | `reply` | Text to send back to the patient |
 
-Required slots (Phase 4 defaults): `chief_complaint`, `symptom_duration`, `preferred_day`.
+Required slots depend on `routed_to` (Phase 8): **general** (`chief_complaint`, …), **cardiology** (`pain_location`, …), **pediatrics** (`child_age`, …). See [phase-8 doc](../phase-8-specialist-sub-agents.md).
 
 `fresh_state(phone)` returns a blank dict for new sessions (Redis memory in Phase 6).
 
@@ -97,9 +97,11 @@ Required slots (Phase 4 defaults): `chief_complaint`, `symptom_duration`, `prefe
 - If incomplete → `gather_slots` asks **one** question, increments `clarification_rounds`, then **graph ends** (patient must reply). This avoids an infinite loop inside a single invoke.
 - After 2 rounds without completion → escalate and mark slots complete.
 
-### `route`
+### `route` (Phase 8)
 
-- Keyword heuristics → `cardiology`, `pediatrics`, or `general` (Phase 8 replaces this with specialist modules).
+- Runs **before** slot-filling for P2/P3.
+- `specialists/router.py` picks `cardiology`, `pediatrics`, or `general` from priority + keywords.
+- Sets `routed_to`; idempotent on resume (ingress skips re-route).
 
 ### `notify_human`
 
@@ -117,10 +119,10 @@ Routing functions live in `graph.py`:
 
 | After node | Router decides |
 |------------|----------------|
-| `classify` | `P1` → emergency; `OOS` → oos; else → slot_check |
-| `slot_check` | complete → route; else → gather_slots |
+| `classify` | `P1` → emergency; `OOS` → oos; else → **route** |
+| `route` | always → slot_check |
+| `slot_check` | complete + (escalated or P1/P2) → notify_human; complete + P3 → confirm_user; else → gather_slots |
 | `gather_slots` | complete → slot_check; else → **END** (wait for patient) |
-| `route` | escalated or P1/P2 → notify_human; else → confirm_user |
 
 Fixed edges: `emergency_exit` → `notify_human` → `confirm_user` → END; `oos_exit` → `confirm_user` → END.
 
@@ -156,8 +158,9 @@ result = graph.invoke({...})
 
 | Phase | Change |
 |-------|--------|
-| 6 | Redis-backed `memory.load`/`save` with TTL (replace in-process dict) |
+| 6 | Done — Redis-backed `memory.load`/`save` with TTL ([phase-6 doc](../phase-6-session-memory.md)) |
 | 7 | `interrupt` at low confidence → `await_human_review`; `update_state` + resume |
-| 8 | Specialist prompts in `gather_slots` via `specialists/` |
+| 8 | Done — specialist slots + questions via `specialists/` ([phase-8 doc](../phase-8-specialist-sub-agents.md)) |
+| 9 | Done — `make eval` classification report ([phase-9 doc](../phase-9-eval-suite.md)) |
 
 See also: [architecture overview](./architecture.md), [build order](../plan.md#phase-4--build-the-state-machine-day-3).

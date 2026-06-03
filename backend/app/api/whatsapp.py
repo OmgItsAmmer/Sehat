@@ -94,7 +94,7 @@ async def green_api_webhook(
         body = _extract_message_body(message_data) if message_data else None
 
         if isinstance(chat_id, str) and body:
-            result = process_incoming_message(
+            result = await process_incoming_message(
                 chat_id=chat_id,
                 body=body,
                 db=db,

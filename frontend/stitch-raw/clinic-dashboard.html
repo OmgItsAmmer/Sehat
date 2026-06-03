@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sehat | Clinic Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "on-tertiary": "#ffffff",
+                        "tertiary-fixed-dim": "#ffb95f",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#ffddb8",
+                        "on-secondary-container": "#fffbff",
+                        "background": "#f8f9ff",
+                        "inverse-primary": "#84d4d3",
+                        "primary": "#005454",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-error": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-fixed-variant": "#653e00",
+                        "primary-fixed-dim": "#84d4d3",
+                        "inverse-surface": "#213145",
+                        "surface-container-lowest": "#ffffff",
+                        "outline-variant": "#bec9c8",
+                        "on-surface": "#0b1c30",
+                        "secondary-fixed-dim": "#ffb4ab",
+                        "on-surface-variant": "#3e4948",
+                        "on-secondary-fixed-variant": "#93000b",
+                        "primary-container": "#0d6e6e",
+                        "on-primary-fixed": "#002020",
+                        "on-secondary": "#ffffff",
+                        "outline": "#6e7979",
+                        "surface-variant": "#d3e4fe",
+                        "on-primary-fixed-variant": "#004f50",
+                        "secondary-fixed": "#ffdad6",
+                        "on-background": "#0b1c30",
+                        "tertiary": "#6a4200",
+                        "error-container": "#ffdad6",
+                        "secondary": "#bb0112",
+                        "on-tertiary-fixed": "#2a1700",
+                        "surface-dim": "#cbdbf5",
+                        "tertiary-container": "#8b5700",
+                        "on-tertiary-container": "#ffd9ae",
+                        "surface-tint": "#016a6a",
+                        "surface-container-highest": "#d3e4fe",
+                        "surface-bright": "#f8f9ff",
+                        "surface": "#f8f9ff",
+                        "secondary-container": "#e02928",
+                        "surface-container-high": "#dce9ff",
+                        "surface-container": "#e5eeff",
+                        "surface-container-low": "#eff4ff",
+                        "on-secondary-fixed": "#410002",
+                        "on-error-container": "#93000a",
+                        "on-primary-container": "#9dedec",
+                        "primary-fixed": "#a0f0f0"
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    spacing: {
+                        "touch-target-min": "48px",
+                        "unit": "4px",
+                        "container-padding": "24px",
+                        "gutter": "16px",
+                        "margin-mobile": "16px"
+                    },
+                    fontFamily: {
+                        "mono-clinical": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "title-lg": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"]
+                    },
+                    fontSize: {
+                        "mono-clinical": ["13px", { lineHeight: "18px", letterSpacing: "0.05em", fontWeight: "500" }],
+                        "headline-md": ["24px", { lineHeight: "32px", fontWeight: "600" }],
+                        "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
+                        "title-lg": ["18px", { lineHeight: "28px", fontWeight: "600" }],
+                        "label-md": ["12px", { lineHeight: "16px", fontWeight: "600" }],
+                        "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }],
+                        "display-lg": ["48px", { lineHeight: "56px", letterSpacing: "-0.02em", fontWeight: "700" }],
+                        "headline-lg": ["32px", { lineHeight: "40px", letterSpacing: "-0.01em", fontWeight: "700" }],
+                        "headline-lg-mobile": ["24px", { lineHeight: "32px", fontWeight: "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .pulse-red {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .stat-banner-enter {
+            animation: slideDown 0.5s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col overflow-hidden">
+<!-- Stat Banner (Simulated Slide Down) -->
+<div class="hidden absolute top-0 left-0 w-full bg-error text-on-error px-container-padding py-unit z-50 flex items-center justify-between stat-banner-enter" id="stat-banner">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">volume_up</span>
+<span class="font-headline-md text-headline-md tracking-tight uppercase">NEW P1 ARRIVAL: Haris Vohr</span>
+</div>
+<button class="text-on-error hover:opacity-80 p-2 min-h-touch-target-min flex items-center justify-center" onclick="document.getElementById('stat-banner').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- TopNavBar -->
+<header class="bg-surface border-b border-outline-variant w-full px-container-padding h-touch-target-min flex justify-between items-center z-40 fixed top-0">
+<div class="flex items-center gap-4">
+<span class="text-title-lg font-headline-lg text-primary tracking-tight">Sehat | صحت</span>
+</div>
+<div class="flex-1 flex justify-center">
+<div class="bg-surface-container-low px-4 py-1.5 rounded-full border border-outline-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error pulse-red"></span>
+<span class="text-label-md font-label-md text-on-surface">24 Active Cases</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center h-touch-target-min w-[48px]">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full transition-colors flex items-center justify-center h-touch-target-min w-[48px]">
+<span class="material-symbols-outlined">emergency_home</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-surface-container-high border border-outline-variant overflow-hidden flex items-center justify-center">
+<img alt="Receptionist Avatar" class="w-full h-full object-cover" data-alt="A close-up, professional portrait of a female clinic receptionist. The lighting is bright and clear, reflecting a modern clinical environment. She has a calm, reassuring expression. The color palette is neutral with soft white and light blue tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6Q2Q1rgd5kV6KnopbbIH6661cJscfWFgUPuJqZHneiEEZ0EibuCP2FjCAK2bKSV2U2WQQa_Lnt8FfUNUl4GyLYFD9-QVRWxrBCliTQsPH4KCjw5vOL2FEaoGuRwBAgFQBwZzRjBEuHaco4LTXw3_oElBVL-S7u0ERIIo4TLRmwDJrVQU6OF8VVBU7kKQ3rIi3dLU89mLEd2S6ziQmrxpMkV6ex2ozMZb_mOF2fNudR1doj8qU4FPAPQj8CjWtEUVboytRCsiZN4HR"/>
+</div>
+</div>
+</header>
+<div class="flex flex-1 pt-[48px] h-screen w-full">
+<!-- SideNavBar -->
+<nav class="bg-surface-container-low border-r border-outline-variant flex flex-col h-full p-unit w-80 shrink-0">
+<div class="px-4 py-4 border-b border-outline-variant mb-2">
+<h2 class="text-headline-md font-headline-md text-primary">Case Queue</h2>
+<p class="text-mono-clinical font-mono-clinical text-on-surface-variant">Live Traffic</p>
+</div>
+<div class="px-2 mb-4">
+<button class="w-full bg-primary-container text-on-primary-container h-touch-target-min rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined">add</span>
+                    Admit New Patient
+                </button>
+</div>
+<div class="flex-1 overflow-y-auto px-2 flex flex-col gap-unit">
+<!-- Tabs Structure per JSON -->
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">queue</span>
+<span class="text-label-md font-label-md flex-1">All Cases</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 bg-primary-container text-on-primary-container rounded-xl font-bold cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">report</span>
+<span class="text-label-md font-label-md flex-1">P1 Critical</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">warning</span>
+<span class="text-label-md font-label-md flex-1">P2 Urgent</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">assignment_ind</span>
+<span class="text-label-md font-label-md flex-1">P3 Routine</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">archive</span>
+<span class="text-label-md font-label-md flex-1">Archived</span>
+</div>
+<div class="mt-4 border-t border-outline-variant pt-4 flex flex-col gap-2">
+<!-- Queue List -->
+<!-- P1 Card -->
+<div class="bg-surface border-l-[4px] border-l-error border-y border-r border-outline-variant p-3 cursor-pointer shadow-[0_4px_12px_rgba(0,0,0,0.05)] rounded-r-lg relative overflow-hidden group">
+<div class="absolute inset-0 bg-error/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start mb-1 relative z-10">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-error pulse-red"></span>
+<span class="text-label-md font-label-md text-error uppercase font-bold">P1 EMERGENCY</span>
+</div>
+<span class="text-mono-clinical font-mono-clinical text-error">4m elapsed</span>
+</div>
+<h3 class="text-title-lg font-title-lg text-on-surface relative z-10">Zainab Ahmed</h3>
+<p class="text-body-md font-body-md text-on-surface-variant relative z-10">Severe Chest Pain</p>
+</div>
+<!-- P2 Card -->
+<div class="bg-surface border-l-[4px] border-l-[#F59E0B] border-y border-r border-outline-variant p-3 cursor-pointer hover:bg-surface-container-low transition-colors rounded-r-lg">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-[#F59E0B]"></span>
+<span class="text-label-md font-label-md text-[#B45309] uppercase font-bold">P2 URGENT</span>
+</div>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant">12m elapsed</span>
+</div>
+<h3 class="text-title-lg font-title-lg text-on-surface">Omar Khan</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">High Fever (103F)</p>
+</div>
+<!-- P3 Card -->
+<div class="bg-surface border-l-[4px] border-l-outline border-y border-r border-outline-variant p-3 cursor-pointer hover:bg-surface-container-low transition-colors rounded-r-lg">
+<div class="flex justify-between items-start mb-1">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-outline"></span>
+<span class="text-label-md font-label-md text-outline uppercase font-bold">P3 ROUTINE</span>
+</div>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant">1h elapsed</span>
+</div>
+<h3 class="text-title-lg font-title-lg text-on-surface">Sara Bibi</h3>
+<p class="text-body-md font-body-md text-on-surface-variant">Refill Request</p>
+</div>
+</div>
+</div>
+<div class="mt-auto border-t border-outline-variant pt-2 px-2 flex flex-col gap-1 pb-4">
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-2 text-on-surface-variant hover:bg-surface-container-high rounded-lg cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">help</span>
+<span class="text-label-md font-label-md">Support</span>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto bg-background p-container-padding flex justify-center">
+<div class="max-w-4xl w-full flex flex-col gap-6">
+<!-- Patient Triage Header -->
+<div class="bg-surface border-[2px] border-error rounded-xl p-6 shadow-[0_4px_12px_rgba(220,38,38,0.1)] relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-error/5 rounded-bl-full pointer-events-none"></div>
+<div class="flex justify-between items-start">
+<div>
+<div class="inline-flex items-center gap-2 bg-error text-on-error px-3 py-1 rounded-full mb-3">
+<span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+<span class="text-label-md font-label-md font-bold uppercase tracking-wider">P1 EMERGENCY</span>
+</div>
+<h1 class="text-headline-lg font-headline-lg text-on-surface mb-1">Zainab Ahmed</h1>
+<p class="text-title-lg font-title-lg text-on-surface-variant">58F • MRN: 8849-2A</p>
+</div>
+<div class="text-right">
+<div class="text-mono-clinical font-mono-clinical text-error mb-1">DOOR TO DOC: 04:22</div>
+<div class="text-label-md font-label-md text-on-surface-variant">Waiting in: Lobby A</div>
+</div>
+</div>
+</div>
+<!-- Action Panel -->
+<div class="bg-surface border border-outline-variant rounded-xl p-6">
+<h2 class="text-title-lg font-title-lg text-on-surface mb-4">Triage Action Required</h2>
+<div class="grid grid-cols-3 gap-4 mb-4">
+<button class="bg-primary-container hover:bg-primary text-on-primary-container hover:text-on-primary h-touch-target-min rounded-xl font-bold flex flex-col items-center justify-center transition-colors border border-primary/20">
+<span class="text-title-lg font-title-lg">Agree ✓</span>
+<span class="text-[10px] uppercase tracking-wider opacity-80">Maintain P1</span>
+</button>
+<button class="bg-[#FEF3C7] hover:bg-[#FDE68A] text-[#92400E] h-touch-target-min rounded-xl font-bold flex flex-col items-center justify-center transition-colors border border-[#F59E0B]/20">
+<span class="text-title-lg font-title-lg">Upgrade ↑</span>
+<span class="text-[10px] uppercase tracking-wider opacity-80">Code Blue</span>
+</button>
+<button class="bg-surface-container-high hover:bg-surface-variant text-on-surface-variant h-touch-target-min rounded-xl font-bold flex flex-col items-center justify-center transition-colors border border-outline-variant">
+<span class="text-title-lg font-title-lg">Downgrade ↓</span>
+<span class="text-[10px] uppercase tracking-wider opacity-80">To P2</span>
+</button>
+</div>
+<div>
+<label class="sr-only" for="triage-note">Add note</label>
+<input class="w-full h-touch-target-min bg-surface border border-outline-variant rounded-lg px-4 text-body-md font-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow" id="triage-note" placeholder="Add note (optional)..." type="text"/>
+</div>
+</div>
+<!-- Conversation Thread -->
+<div class="bg-surface border border-outline-variant rounded-xl flex flex-col flex-1 min-h-[300px]">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container-lowest rounded-t-xl">
+<h3 class="text-title-lg font-title-lg text-on-surface">Intake Conversation</h3>
+</div>
+<div class="p-6 flex flex-col gap-6 flex-1 overflow-y-auto">
+<!-- System Prompt -->
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-sm border border-outline-variant max-w-[80%]">
+<p class="text-body-md font-body-md text-on-surface">Automated Intake: Please describe your main symptom.</p>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant text-[10px] mt-2 block">10:42 AM</span>
+</div>
+</div>
+<!-- Patient Response -->
+<div class="flex gap-4 flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 border border-primary/20">
+<span class="text-label-md font-label-md text-on-primary-container">ZA</span>
+</div>
+<div class="bg-primary/5 p-4 rounded-2xl rounded-tr-sm border border-primary/10 max-w-[80%]">
+<p class="text-body-md font-body-md text-on-surface font-medium">I have severe chest pain that started an hour ago. It feels like a heavy weight.</p>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant text-[10px] mt-2 block text-right">10:44 AM</span>
+</div>
+</div>
+<!-- System Prompt -->
+<div class="flex gap-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0 border border-outline-variant">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">smart_toy</span>
+</div>
+<div class="bg-surface-container-low p-4 rounded-2xl rounded-tl-sm border border-outline-variant max-w-[80%]">
+<p class="text-body-md font-body-md text-on-surface">Are you experiencing any shortness of breath or pain radiating to your arm or jaw?</p>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant text-[10px] mt-2 block">10:44 AM</span>
+</div>
+</div>
+<!-- Patient Response - Highlighted as critical -->
+<div class="flex gap-4 flex-row-reverse">
+<div class="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center shrink-0 border border-primary/20">
+<span class="text-label-md font-label-md text-on-primary-container">ZA</span>
+</div>
+<div class="bg-error/10 p-4 rounded-2xl rounded-tr-sm border border-error/20 max-w-[80%] relative overflow-hidden">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<p class="text-body-md font-body-md text-on-surface font-bold">Yes, it's very hard to breathe and my left arm feels numb.</p>
+<span class="text-mono-clinical font-mono-clinical text-on-surface-variant text-[10px] mt-2 block text-right">10:45 AM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+        // Simulate an emergency alert appearing after a short delay
+        setTimeout(() => {
+            document.getElementById('stat-banner').classList.remove('hidden');
+        }, 3000);
+    </script>
+</body></html>

@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+/* Sehat Clinical Intelligence — from Stitch project 14292060559091575997 */
+@theme {
+  --color-background: #f8f9ff;
+  --color-surface: #f8f9ff;
+  --color-surface-bright: #f8f9ff;
+  --color-surface-dim: #cbdbf5;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-high: #dce9ff;
+  --color-surface-container-highest: #d3e4fe;
+  --color-surface-variant: #d3e4fe;
+  --color-surface-tint: #016a6a;
+  --color-on-background: #0b1c30;
+  --color-on-surface: #0b1c30;
+  --color-on-surface-variant: #3e4948;
+  --color-outline: #6e7979;
+  --color-outline-variant: #bec9c8;
+  --color-primary: #005454;
+  --color-primary-container: #0d6e6e;
+  --color-on-primary: #ffffff;
+  --color-on-primary-container: #9dedec;
+  --color-primary-fixed: #a0f0f0;
+  --color-primary-fixed-dim: #84d4d3;
+  --color-on-primary-fixed: #002020;
+  --color-secondary: #bb0112;
+  --color-secondary-container: #e02928;
+  --color-on-secondary: #ffffff;
+  --color-on-secondary-container: #fffbff;
+  --color-tertiary: #6a4200;
+  --color-tertiary-container: #8b5700;
+  --color-tertiary-fixed-dim: #ffb95f;
+  --color-error: #ba1a1a;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffdad6;
+  --color-inverse-surface: #213145;
+  --color-inverse-on-surface: #eaf1ff;
+  --spacing-touch-target-min: 48px;
+  --spacing-container-padding: 24px;
+  --spacing-gutter: 16px;
+  --spacing-margin-mobile: 16px;
+  --spacing-unit: 4px;
+  --radius-DEFAULT: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+}
+
+/* Stitch typography utilities (match exported HTML class names) */
+.font-display-lg,
+.font-headline-lg,
+.font-headline-lg-mobile,
+.font-headline-md {
+  font-family: var(--font-display);
+}
+.font-body-lg,
+.font-body-md,
+.font-title-lg,
+.font-label-md,
+.font-mono-clinical {
+  font-family: var(--font-body);
+}
+
+.text-display-lg {
+  font-size: 48px;
+  line-height: 56px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.text-headline-lg {
+  font-size: 32px;
+  line-height: 40px;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.text-headline-lg-mobile {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 700;
+}
+.text-headline-md {
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 600;
+}
+.text-title-lg {
+  font-size: 18px;
+  line-height: 28px;
+  font-weight: 600;
+}
+.text-body-lg {
+  font-size: 16px;
+  line-height: 24px;
+}
+.text-body-md {
+  font-size: 14px;
+  line-height: 20px;
+}
+.text-label-md {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+.text-mono-clinical {
+  font-size: 13px;
+  line-height: 18px;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+}
+
+.pulse-red {
+  animation: stitch-pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+.p1-pulse {
+  animation: stitch-pulse-red 2s infinite;
+}
+.pulse-emergency {
+  animation: stitch-pulse-emergency 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.emergency-gradient {
+  background: radial-gradient(circle at center, #bb0112 70%, #93000b 110%);
+}
+.zebra-list > div:nth-child(even) {
+  background-color: #f8f9ff;
+}
+.chat-bubble-patient {
+  border-bottom-left-radius: 0 !important;
+}
+.chat-bubble-ai {
+  border-bottom-right-radius: 0 !important;
+}
+
+@keyframes stitch-pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+@keyframes stitch-pulse-red {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(220, 38, 38, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+  }
+}
+@keyframes stitch-pulse-emergency {
+  0%,
+  100% {
+    opacity: 1;
+    border-color: #bb0112;
+  }
+  50% {
+    opacity: 0.7;
+    border-color: transparent;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+.material-symbols-filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
