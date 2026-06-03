@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Repo root `.env` (make migrate runs from backend/, so CWD-relative ".env" misses it)
+# Rpo root `.env` (make migrate runs from backend/, so CWD-relative ".env" misses it)
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _ENV_FILE = _REPO_ROOT / ".env"
 
@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o-mini"
 
     slack_webhook_url: str = ""
+
+    # LangGraph max supersteps per invoke (default library limit is 25)
+    langgraph_recursion_limit: int = 100
 
 
 settings = Settings()

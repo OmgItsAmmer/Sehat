@@ -1,22 +1,16 @@
-"""REST API for the clinic web app (cases, analytics, simulated patient chat)."""
+"""REST API for the clinic dashboard (WhatsApp + web chat cases)."""
 
 from __future__ import annotations
 
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
-from app.services import dashboard, intake
+from app.services import dashboard
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
-
-
-class ChatMessageIn(BaseModel):
-    phone: str = Field(..., min_length=3, description="WhatsApp chat id, e.g. 923001234567@c.us")
-    body: str = Field(..., min_length=1, max_length=4096)
 
 
 @router.get("/cases")
@@ -54,27 +48,13 @@ async def recent_alerts(
     return {"alerts": alerts[:20]}
 
 
-@router.post("/chat/message")
-async def send_chat_message(
-    body: ChatMessageIn,
-    db: Annotated[Session | None, Depends(get_db)],
-) -> dict[str, Any]:
-    """Simulate an inbound WhatsApp message (patient chat UI in the web app)."""
-    result = await intake.process_incoming_message(
-        chat_id=body.phone,
-        body=body.body,
-        db=db,
-        raw_payload=None,
-    )
-    return {
-        "phone": body.phone,
-        "priority": result.get("priority"),
-        "confidence": result.get("confidence"),
-        "reasoning": result.get("reasoning"),
-        "escalated": result.get("escalated"),
-        "slots_complete": result.get("slots_complete"),
-        "slots": result.get("slots"),
-        "reply": result.get("reply"),
-        "pending_slot": result.get("pending_slot"),
-        "messages": result.get("messages"),
-    }
+@router.post("/dev/clear-sessions")
+async def clear_sessions() -> dict[str, str]:
+    """
+    Clear all triage sessions from Redis/in-memory.
+
+    Use after wiping Postgres or when the queue shows stale cases.
+    Does not delete database rows.
+    """
+    await dashboard.clear_all_sessions()
+    return {"ok": "true", "message": "Cleared all WhatsApp and web chat sessions."}

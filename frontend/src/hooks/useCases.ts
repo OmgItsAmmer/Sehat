@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
 import type { CaseDetail, CaseSummary } from "@/api/types";
+import { friendlyApiError } from "@/lib/userMessages";
 
 export function useCases() {
   const [cases, setCases] = useState<CaseSummary[]>([]);
@@ -17,7 +18,7 @@ export function useCases() {
       setLastUpdated(new Date());
       return r.cases;
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(friendlyApiError(e));
       throw e;
     } finally {
       setLoading(false);
@@ -52,8 +53,8 @@ export function useCaseDetail(phone: string | undefined) {
       setError(null);
       return d;
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      if (!msg.includes("404") && !msg.includes("Case not found")) {
+      const msg = friendlyApiError(e);
+      if (!msg.includes("no longer active") && !msg.includes("could not be found")) {
         setError(msg);
       } else {
         setError(null);

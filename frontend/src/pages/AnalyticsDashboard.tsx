@@ -39,7 +39,7 @@ export function AnalyticsDashboard() {
         <div className="flex items-center gap-8">
           <span className="font-headline-md text-headline-md font-bold text-primary">Sehat | صحت</span>
           <nav className="hidden items-center gap-6 md:flex">
-            <Link className="font-body-md text-on-surface-variant hover:text-primary" to="/">
+            <Link className="font-body-md text-on-surface-variant hover:text-primary" to="/dashboard">
               Dashboard
             </Link>
             <Link className="border-b-2 border-primary pb-1 font-body-md font-bold text-primary" to="/analytics">

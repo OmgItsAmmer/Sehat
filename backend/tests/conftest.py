@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from app.config import settings
 from app.main import app
-from app.services import memory
+from app.services import memory, web_memory
 from fastapi.testclient import TestClient
 
 
@@ -52,10 +52,12 @@ async def _in_memory_sessions_for_http_tests(
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()
     yield
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()
 
 
 @pytest.fixture

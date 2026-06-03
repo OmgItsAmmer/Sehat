@@ -37,9 +37,13 @@ class TriageState(TypedDict, total=False):
     escalated: bool
     slack_notified: bool
     pending_slot: str | None
+    # reply_intent: structured clinical instruction for compose_reply_node
+    # reply: the final natural-language message sent to the patient
+    reply_intent: str
     reply: str
     awaiting_human_review: bool
     human_review_resolved: bool
+    last_activity_at: str | None
 
 
 def fresh_state(patient_phone: str) -> TriageState:
@@ -57,6 +61,7 @@ def fresh_state(patient_phone: str) -> TriageState:
         "escalated": False,
         "slack_notified": False,
         "pending_slot": None,
+        "reply_intent": "",
         "reply": "",
         "awaiting_human_review": False,
         "human_review_resolved": False,

@@ -75,7 +75,7 @@ async def _phase_http_memory(
 ) -> AsyncGenerator[None, None]:
     """Integration/system phase tests never depend on live Redis."""
     from app.config import settings
-    from app.services import memory
+    from app.services import memory, web_memory
 
     markers = {m.name for m in request.node.iter_markers()}
     if not markers & {"integration", "system"}:
@@ -86,7 +86,9 @@ async def _phase_http_memory(
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()
     yield
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()

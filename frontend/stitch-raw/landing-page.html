@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sehat | Dr. Muhid Clinics</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;family=Noto+Nastaliq+Urdu:wght@100..900&amp;family=Plus+Jakarta+Sans:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+          font-family: 'Material Symbols Outlined';
+          font-weight: normal;
+          font-style: normal;
+          font-size: 24px;
+          line-height: 1;
+          letter-spacing: normal;
+          text-transform: none;
+          display: inline-block;
+          white-space: nowrap;
+          word-wrap: normal;
+          direction: ltr;
+          -webkit-font-feature-settings: 'liga';
+          -webkit-font-smoothing: antialiased;
+        }
+    </style>
+<!-- Tailwind Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface": "#131b2e",
+                      "on-primary-container": "#7f8397",
+                      "surface-tint": "#595e70",
+                      "error": "#ba1a1a",
+                      "on-surface-variant": "#46464c",
+                      "tertiary": "#000000",
+                      "error-container": "#ffdad6",
+                      "on-primary-fixed-variant": "#414658",
+                      "secondary-container": "#82f7df",
+                      "on-tertiary-container": "#f63a35",
+                      "on-error-container": "#93000a",
+                      "on-secondary-fixed-variant": "#005045",
+                      "on-primary-fixed": "#161b2b",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "tertiary-container": "#410002",
+                      "surface-container-high": "#e2e7ff",
+                      "on-secondary-container": "#007162",
+                      "on-background": "#131b2e",
+                      "on-tertiary-fixed-variant": "#93000b",
+                      "secondary": "#006b5d",
+                      "surface-bright": "#faf8ff",
+                      "on-tertiary-fixed": "#410002",
+                      "on-primary": "#ffffff",
+                      "primary-fixed": "#dee1f7",
+                      "on-secondary": "#ffffff",
+                      "primary-fixed-dim": "#c2c6db",
+                      "surface-dim": "#d2d9f4",
+                      "inverse-on-surface": "#eef0ff",
+                      "outline": "#76767d",
+                      "primary": "#000000",
+                      "primary-container": "#161b2b",
+                      "surface-container-highest": "#dae2fd",
+                      "background": "#faf8ff",
+                      "surface-container": "#eaedff",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#dae2fd",
+                      "inverse-primary": "#c2c6db",
+                      "secondary-fixed": "#82f7df",
+                      "outline-variant": "#c7c6cd",
+                      "inverse-surface": "#283044",
+                      "tertiary-fixed": "#ffdad6",
+                      "surface-container-low": "#f2f3ff",
+                      "surface": "#faf8ff",
+                      "secondary-fixed-dim": "#64dac4",
+                      "on-secondary-fixed": "#00201b",
+                      "tertiary-fixed-dim": "#ffb4ab"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "stack-md": "16px",
+                      "container-max": "1200px",
+                      "stack-xl": "64px",
+                      "margin-desktop": "48px",
+                      "stack-lg": "32px",
+                      "margin-mobile": "16px",
+                      "stack-sm": "8px",
+                      "unit": "8px"
+              },
+              "fontFamily": {
+                      "body-sm": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-urdu": ["Noto Nastaliq Urdu"],
+                      "headline-sm": ["Plus Jakarta Sans"],
+                      "headline-md": ["Plus Jakarta Sans"],
+                      "body-md": ["Inter"],
+                      "label-caps": ["Inter"],
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "headline-lg": ["Plus Jakarta Sans"]
+              },
+              "fontSize": {
+                      "body-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-urdu": ["18px", {"lineHeight": "2.5", "fontWeight": "400"}],
+                      "headline-sm": ["18px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "label-caps": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["30px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "headline-lg": ["40px", {"lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        /* Faint grid utility */
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-primary-container border-b border-outline-variant/10 shadow-md docked full-width top-0 sticky z-50">
+<div class="flex justify-between items-center w-full px-margin-desktop max-w-container-max mx-auto h-20">
+<div class="text-headline-md font-headline-md font-bold text-on-primary">
+                Sehat | صحت
+            </div>
+<div class="hidden md:flex space-x-gutter items-center">
+<!-- Navigation Links -->
+<a class="text-secondary-fixed font-bold border-b-2 border-secondary-fixed pb-1 hover:text-secondary-fixed transition-colors duration-200" href="#">Home</a>
+<a class="text-on-primary-container font-body-md hover:text-secondary-fixed transition-colors duration-200" href="#">How It Works</a>
+<a class="text-on-primary-container font-body-md hover:text-secondary-fixed transition-colors duration-200" href="#">For Clinics</a>
+<a class="text-on-primary-container font-body-md hover:text-secondary-fixed transition-colors duration-200" href="#">Contact</a>
+</div>
+<div class="flex items-center space-x-4">
+<button class="text-on-primary font-body-md hover:text-secondary-fixed transition-colors duration-200">Language Toggle</button>
+<button class="bg-secondary text-on-secondary px-4 py-2 rounded-lg font-headline-sm text-headline-sm hover:opacity-80 transition-all">Open Dashboard</button>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow">
+<!-- HERO SECTION -->
+<section class="relative bg-primary-container overflow-hidden pt-stack-xl pb-stack-xl bg-grid-pattern">
+<!-- Subtle teal radial glow -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<div class="w-[800px] h-[800px] bg-secondary-fixed rounded-full blur-[120px] opacity-10"></div>
+</div>
+<div class="max-w-container-max mx-auto px-margin-desktop relative z-10 flex flex-col items-center text-center">
+<!-- Top Badge -->
+<div class="inline-flex items-center gap-2 bg-secondary-container/20 text-secondary-fixed px-4 py-2 rounded-full font-label-caps text-label-caps mb-stack-md border border-secondary-fixed/30">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span>
+                    AI-Powered · Dr. Muhid Clinics · Lahore, Pakistan
+                </div>
+<!-- Headline -->
+<h1 class="text-headline-lg-mobile md:text-headline-lg font-headline-lg-mobile md:font-headline-lg text-on-primary mb-stack-md max-w-4xl tracking-tight">
+                    Every patient message. Seen. Triaged. Routed. In seconds.
+                </h1>
+<!-- Subheadline -->
+<p class="text-body-lg font-body-lg text-on-primary-container max-w-[600px] mb-stack-lg">
+                    Sehat's AI handles your clinic's intake — asking the right questions, catching emergencies before they're missed, and handing Fatima only what needs a human touch.
+                </p>
+<!-- CTAs -->
+<div class="flex flex-col sm:flex-row gap-4 mb-stack-xl">
+<button class="bg-secondary-fixed text-on-secondary-fixed px-8 py-3 rounded-full font-headline-sm text-headline-sm shadow-[0_0_20px_rgba(130,247,223,0.3)] hover:opacity-90 transition-all">
+                        Chat Now →
+                    </button>
+<button class="border border-on-primary text-on-primary px-8 py-3 rounded-full font-headline-sm text-headline-sm hover:bg-on-primary/10 transition-all">
+                        See How It Works ↓
+                    </button>
+</div>
+<!-- Floating Mockup -->
+<div class="w-full max-w-[420px] bg-surface-container-lowest rounded-xl shadow-2xl -rotate-3 transition-transform hover:rotate-0 duration-500 overflow-hidden border border-outline-variant/30">
+<div class="bg-secondary px-4 py-3 flex items-center justify-between text-on-secondary">
+<span class="font-headline-sm text-headline-sm">Sehat | صحت</span>
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="p-6 bg-surface-container-low flex flex-col gap-4 text-left">
+<!-- Bot Bubble 1 -->
+<div class="bg-surface-container-lowest text-on-surface p-3 rounded-2xl rounded-tl-none text-body-sm shadow-sm border border-outline-variant/20 self-start max-w-[85%]">
+                            Assalam o Alaikum! Dr. Muhid Clinics mein khush aamdeed. Apni takleef batayein.
+                        </div>
+<!-- Patient Bubble -->
+<div class="bg-secondary-container text-on-secondary-container p-3 rounded-2xl rounded-tr-none text-body-sm shadow-sm self-end max-w-[85%]">
+                            Mere abbu ko seene mein dard ho raha hai
+                        </div>
+<!-- Bot Bubble 2 (Emergency) -->
+<div class="bg-error-container border border-error text-on-error-container p-3 rounded-2xl rounded-tl-none text-body-sm shadow-sm self-start max-w-[85%] flex gap-2">
+<span class="material-symbols-outlined text-error text-[20px]">warning</span>
+<span>Yeh emergency ho sakti hai. Abhi 1122 call karein. Hum bhi Fatima ko alert kar rahe hain.</span>
+</div>
+</div>
+</div>
+<!-- Below card badge -->
+<div class="mt-4 inline-flex items-center gap-2 bg-error-container text-on-error-container px-3 py-1 rounded-full text-label-caps font-label-caps shadow-sm">
+<span class="material-symbols-outlined text-[16px]">notifications_active</span>
+                    Fatima ko alert bhej diya
+                </div>
+</div>
+</section>
+<!-- TRUST COUNTERS -->
+<section class="bg-inverse-surface border-y border-outline-variant/10 py-stack-md">
+<div class="max-w-container-max mx-auto px-margin-desktop grid grid-cols-2 md:grid-cols-4 gap-gutter divide-x divide-outline-variant/20 text-center">
+<div class="px-4">
+<div class="text-secondary-fixed font-headline-md text-headline-md">2 min</div>
+<div class="text-on-primary-container text-label-caps font-label-caps mt-1">Avg response time</div>
+</div>
+<div class="px-4">
+<div class="text-secondary-fixed font-headline-md text-headline-md">80%</div>
+<div class="text-on-primary-container text-label-caps font-label-caps mt-1">Cases handled autonomously</div>
+</div>
+<div class="px-4">
+<div class="text-secondary-fixed font-headline-md text-headline-md">P1 in 4s</div>
+<div class="text-on-primary-container text-label-caps font-label-caps mt-1">Emergency alert speed</div>
+</div>
+<div class="px-4">
+<div class="text-secondary-fixed font-headline-md text-headline-md">Urdu + English</div>
+<div class="text-on-primary-container text-label-caps font-label-caps mt-1">Bilingual support</div>
+</div>
+</div>
+</section>
+<!-- SECTION 1: The Problem -->
+<section class="bg-surface py-stack-xl">
+<div class="max-w-container-max mx-auto px-margin-desktop text-center">
+<h2 class="text-headline-md font-headline-md text-on-surface mb-stack-lg max-w-2xl mx-auto">
+                    Your receptionist shouldn't be reading 34 messages before 9am.
+                </h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 flex flex-col items-center text-center">
+<div class="text-4xl mb-4">📬</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-2">Message Overload</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Important patient queries get buried under routine questions.</p>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 flex flex-col items-center text-center">
+<div class="text-4xl mb-4">⏱</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-2">Delayed Response</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Patients wait hours for simple answers or triage directions.</p>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest p-stack-md rounded-xl border border-outline-variant/30 flex flex-col items-center text-center">
+<div class="text-4xl mb-4">😓</div>
+<h3 class="text-headline-sm font-headline-sm text-on-surface mb-2">Staff Burnout</h3>
+<p class="text-body-sm font-body-sm text-on-surface-variant">Front desk staff are overwhelmed, leading to mistakes and stress.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: How It Works -->
+<section class="bg-surface-container-low py-stack-xl border-t border-outline-variant/10">
+<div class="max-w-container-max mx-auto px-margin-desktop">
+<h2 class="text-headline-md font-headline-md text-on-surface mb-stack-lg text-center">
+                    How Sehat Works
+                </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+<!-- Step 1 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">1</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Patient sends message</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Initiates contact via WhatsApp or SMS.</p>
+</div>
+</div>
+<!-- Step 2 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">2</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Sehat reads/classifies</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">AI instantly analyzes intent and urgency.</p>
+</div>
+</div>
+<!-- Step 3 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">3</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">P1 alert in &lt;4s</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Emergencies trigger immediate clinic notification.</p>
+</div>
+</div>
+<!-- Step 4 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">4</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">P2/P3 intake</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Routine cases get automated screening questions.</p>
+</div>
+</div>
+<!-- Step 5 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">5</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Packaged history</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Symptoms are summarized for the doctor.</p>
+</div>
+</div>
+<!-- Step 6 -->
+<div class="flex gap-4 items-start">
+<div class="text-secondary font-headline-lg text-headline-lg opacity-80">6</div>
+<div>
+<h4 class="text-headline-sm font-headline-sm text-on-surface">Clean handoff</h4>
+<p class="text-body-sm font-body-sm text-on-surface-variant mt-1">Staff receives a neat, actionable ticket.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: Clinic CTA -->
+<section class="bg-primary-container py-stack-xl relative overflow-hidden">
+<div class="max-w-container-max mx-auto px-margin-desktop text-center relative z-10">
+<h2 class="text-headline-md font-headline-md text-on-primary mb-stack-sm">
+                    Built for Pakistani clinics. Ready in one day.
+                </h2>
+<p class="text-body-lg font-body-lg text-on-primary-container mb-stack-lg max-w-2xl mx-auto">
+                    No hardware. No IT team. Your clinic's WhatsApp number, our AI.
+                </p>
+<button class="bg-secondary-fixed text-on-secondary-fixed px-8 py-4 rounded-full font-headline-sm text-headline-sm shadow-[0_0_20px_rgba(130,247,223,0.2)] hover:opacity-90 transition-all">
+                    Get Sehat for Your Clinic →
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-primary-container border-t border-outline-variant/10 w-full">
+<div class="grid grid-cols-1 md:grid-cols-12 gap-stack-lg w-full px-margin-desktop py-stack-xl max-w-container-max mx-auto">
+<div class="md:col-span-4 flex flex-col gap-4">
+<div class="text-headline-sm font-headline-sm font-bold text-on-primary">
+                    Sehat AI
+                </div>
+<div class="text-body-sm font-body-sm text-on-primary-container">
+                    © 2024 Sehat AI. Built in Pakistan.
+                </div>
+</div>
+<div class="md:col-span-8 flex flex-wrap gap-x-12 gap-y-6 justify-start md:justify-end">
+<a class="text-on-primary-container text-body-sm font-body-sm hover:text-secondary-fixed transition-colors" href="#">Product</a>
+<a class="text-on-primary-container text-body-sm font-body-sm hover:text-secondary-fixed transition-colors" href="#">Clinic</a>
+<a class="text-on-primary-container text-body-sm font-body-sm hover:text-secondary-fixed transition-colors" href="#">Legal</a>
+</div>
+</div>
+</footer>
+</body></html>

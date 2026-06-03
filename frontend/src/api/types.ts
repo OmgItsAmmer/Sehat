@@ -17,8 +17,10 @@ export interface CaseSummary {
   pending_slot: string | null;
   reply: string;
   awaiting_human_review?: boolean;
-  /** session = live Redis triage; database = Postgres only; both = merged */
-  source?: "session" | "database" | "both";
+  /** session = WhatsApp Redis; web = web chat Redis; database = Postgres only; both = merged */
+  source?: "session" | "database" | "both" | "web";
+  /** ISO timestamp — newest activity first in the clinic queue */
+  last_activity_at?: string | null;
 }
 
 export interface OverrideResponse {
@@ -47,15 +49,21 @@ export interface Analytics {
   database?: { patients: number; messages: number };
 }
 
-export interface ChatResponse {
-  phone: string;
+export interface WebChatSession {
+  session_id: string;
+  channel: "web";
   priority: Priority;
   confidence: number;
   reasoning: string;
   escalated: boolean;
   slots_complete: boolean;
   slots: Record<string, string>;
-  reply: string;
+  routed_to: string | null;
+  message_count: number;
+  last_message: string;
   pending_slot: string | null;
+  reply: string;
+  awaiting_human_review?: boolean;
   messages: string[];
+  clarification_rounds: number;
 }

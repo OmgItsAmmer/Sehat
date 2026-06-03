@@ -39,12 +39,14 @@ flowchart TD
     slot_check -->|slots complete| notify
     slot_check -->|slots complete P3| confirm
     slot_check -->|missing slots| gather[gather_slots]
-    gather -->|question asked| END1([END pause])
+    gather -->|question asked| compose_reply[compose_reply]
     gather -->|forced complete| slot_check
-    confirm --> END2([END])
+    confirm --> compose_reply
+    await_human_review --> compose_reply
+    compose_reply --> END2([END])
 ```
 
-**One `graph.invoke(state)`** runs from `START` until `END` (or until the gather-slots pause). Phase 5 will call invoke from the WhatsApp webhook; Phase 6 will load/save the same `TriageState` in Redis between messages.
+**One `graph.invoke(state)`** runs from `START` until `END` (or until the gather-slots pause). The final `compose_reply` node rewrites the structured `reply_intent` into a natural, context-aware patient message using the LLM.
 
 ---
 
@@ -66,7 +68,8 @@ State is a `typing_extensions.TypedDict` (required on Python 3.11 with Pydantic/
 | `escalated` | Human attention needed |
 | `slack_notified` | Set when `notify_human_node` runs |
 | `pending_slot` | Slot name the bot is waiting for (filled on next inbound message) |
-| `reply` | Text to send back to the patient |
+| `reply_intent` | Structured clinical instruction written by domain nodes, consumed by `compose_reply_node` |
+| `reply` | Final natural-language WhatsApp message, written only by `compose_reply_node` |
 
 Required slots depend on `routed_to` (Phase 8): **general** (`chief_complaint`, …), **cardiology** (`pain_location`, …), **pediatrics** (`child_age`, …). See [phase-8 doc](../phase-8-specialist-sub-agents.md).
 
@@ -109,7 +112,19 @@ Required slots depend on `routed_to` (Phase 8): **general** (`chief_complaint`, 
 
 ### `confirm_user`
 
-- Fills a default `reply` if no earlier node set one.
+- Sets `reply_intent` for the happy-path P2/P3 confirmation if no earlier node set one.
+
+### `compose_reply` *(all paths converge here)*
+
+- Reads `reply_intent` (structured clinical instruction) + full `messages` history.
+- Calls `composer.compose_reply()` → OpenAI generates a natural, culturally-aware WhatsApp message.
+- Writes the final `reply` field.
+- **Natural language rules enforced by the LLM prompt:**
+  - Greetings (Assalamualaikum) are answered before any clinical content.
+  - Language matches the patient (English / Urdu / Roman Urdu).
+  - Off-topic conversations are gently redirected to health concerns.
+  - Internal codes (P1/P2/P3/OOS) are never exposed.
+  - Falls back to the raw `reply_intent` text if the LLM call fails.
 
 ---
 
@@ -122,9 +137,9 @@ Routing functions live in `graph.py`:
 | `classify` | `P1` → emergency; `OOS` → oos; else → **route** |
 | `route` | always → slot_check |
 | `slot_check` | complete + (escalated or P1/P2) → notify_human; complete + P3 → confirm_user; else → gather_slots |
-| `gather_slots` | complete → slot_check; else → **END** (wait for patient) |
+| `gather_slots` | complete + no intent → slot_check; complete + intent (forced) → notify/confirm; else → **compose_reply** → END |
 
-Fixed edges: `emergency_exit` → `notify_human` → `confirm_user` → END; `oos_exit` → `confirm_user` → END.
+Fixed edges: `emergency_exit` → `notify_human` → `confirm_user` → `compose_reply` → END; `oos_exit` → `confirm_user` → `compose_reply` → END; `await_human_review` → `compose_reply` → END; `gather_slots` (slot question path) → `compose_reply` → END.
 
 ---
 

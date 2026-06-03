@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 
+from app.agent.composer import compose_reply
 from app.agent.specialists import get_profile
 from app.agent.specialists.router import pick_specialist
 from app.agent.state import (
@@ -24,6 +25,10 @@ def _matches_p1_keywords(text: str) -> bool:
     lowered = text.lower()
     return any(kw in lowered for kw in P1_KEYWORDS)
 
+
+# ---------------------------------------------------------------------------
+# Classification
+# ---------------------------------------------------------------------------
 
 def classify_node(state: TriageState) -> dict:
     """Run OpenAI triage on the latest patient message."""
@@ -53,14 +58,19 @@ def classify_node(state: TriageState) -> dict:
     return updates
 
 
+# ---------------------------------------------------------------------------
+# Exit / terminal intent nodes  (set reply_intent, NOT reply)
+# ---------------------------------------------------------------------------
+
 def emergency_exit_node(state: TriageState) -> dict:
     """P1 fast path — skip slot-filling, advise emergency services."""
     return {
         "escalated": True,
         "slots_complete": True,
-        "reply": (
-            "This sounds urgent. Please call 1122 or go to the nearest emergency room now. "
-            "A clinic staff member has been alerted."
+        "reply_intent": (
+            "EMERGENCY: tell the patient this sounds urgent. "
+            "Ask them to call 1122 or go to the nearest emergency room immediately. "
+            "Reassure them that a clinic staff member has been alerted."
         ),
     }
 
@@ -69,16 +79,21 @@ def oos_exit_node(state: TriageState) -> dict:
     """Out-of-scope redirect — no slot-filling."""
     return {
         "slots_complete": True,
-        "reply": (
-            "For billing, visa medical certificates, lab results, and pharmacy questions, "
-            "please contact City Medical Center directly. "
-            "I can help with appointment triage and symptoms only."
+        "reply_intent": (
+            "OOS: the patient asked about something outside the bot's scope "
+            "(billing, visa letters, lab printouts, pharmacy stock, or unrelated topics). "
+            "Warmly tell them those are handled at the City Medical Center reception. "
+            "Then ask if they have any health concern you can help with today. "
+            "End with: Type *reset* to start a fresh conversation anytime."
         ),
     }
 
 
 def slot_check_node(state: TriageState) -> dict:
     """Mark whether all required intake slots are filled."""
+    # Forced completion (max clarification rounds) — do not re-open slot gathering.
+    if state.get("slots_complete") and state.get("escalated"):
+        return {}
     missing = missing_slots(state)
     return {"slots_complete": len(missing) == 0}
 
@@ -95,21 +110,25 @@ def gather_slots_node(state: TriageState) -> dict:
         return {
             "escalated": True,
             "slots_complete": True,
-            "reply": (
-                "I still need a few details. A receptionist will follow up with you shortly."
+            "reply_intent": (
+                "ESCALATE: the bot still needs a few intake details but the patient "
+                "hasn't provided them. Politely say a receptionist will follow up shortly."
             ),
         }
 
     slot_name = missing[0]
     profile = get_profile(state.get("routed_to"))
-    question = profile.slot_questions.get(
+    raw_question = profile.slot_questions.get(
         slot_name,
         f"Please share your {slot_name}.",
     )
     return {
         "clarification_rounds": rounds + 1,
         "pending_slot": slot_name,
-        "reply": question,
+        "reply_intent": (
+            f"SLOT_QUESTION: ask the patient for their {slot_name}. "
+            f"Suggested phrasing: {raw_question}"
+        ),
     }
 
 
@@ -152,24 +171,73 @@ def await_human_review_node(state: TriageState) -> dict:
     return {
         "awaiting_human_review": True,
         "escalated": True,
-        "reply": (
-            "Thank you. A receptionist is reviewing your case and will confirm next steps shortly."
+        "reply_intent": (
+            "HOLD: the bot is not confident about the classification. "
+            "Reassure the patient that their message was received and a receptionist "
+            "is reviewing their case and will confirm next steps shortly."
         ),
     }
 
 
 def confirm_user_node(state: TriageState) -> dict:
-    """Final patient-facing reply when a node has not already set one."""
-    if state.get("reply"):
+    """Set reply_intent for the happy-path confirmation (P2/P3 fully slotted)."""
+    if state.get("reply_intent"):
         return {}
 
     priority = state.get("priority")
     routed = state.get("routed_to") or "our clinic"
     if priority in ("P2", "P3"):
         return {
-            "reply": (
-                f"Thank you. Your case is logged as {priority} and routed to {routed}. "
-                "We will confirm your appointment shortly."
+            "reply_intent": (
+                f"CONFIRMED: the patient's case has been logged as {priority} priority "
+                f"and routed to {routed}. "
+                "Warmly confirm receipt and say they will hear back shortly to confirm the appointment."
             ),
         }
-    return {"reply": "Thank you. We have recorded your message."}
+    return {
+        "reply_intent": (
+            "RECEIVED: the patient's message has been recorded. "
+            "Acknowledge warmly and say the team will be in touch."
+        ),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Natural reply composer — always the last node before END
+# ---------------------------------------------------------------------------
+
+def compose_reply_node(state: TriageState) -> dict:
+    """
+    Convert reply_intent → natural patient-facing reply via LLM.
+
+    This is the only node that writes the `reply` field.  Every other node
+    writes `reply_intent` (a structured instruction for this node).
+    Passes only the LAST patient message + filled slots to prevent hallucination.
+    """
+    intent = (state.get("reply_intent") or "").strip()
+    if not intent:
+        return {}
+
+    last_message = latest_message(state)
+    filled_slots = dict(state.get("slots") or {})
+
+    # CLI visibility: log current triage state so devs can track LLM progress
+    priority = state.get("priority") or "?"
+    routed = state.get("routed_to") or "unrouted"
+    logger.info(
+        "STATE | phone=%-15s priority=%-3s routed=%-12s slots=%s",
+        state.get("patient_phone", "?"),
+        priority,
+        routed,
+        filled_slots or "(empty)",
+    )
+    if filled_slots:
+        for slot_key, slot_val in filled_slots.items():
+            logger.info("  SLOT filled  %-20s = %r", slot_key, slot_val)
+
+    natural = compose_reply(
+        last_message=last_message,
+        intent=intent,
+        filled_slots=filled_slots,
+    )
+    return {"reply": natural}

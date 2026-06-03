@@ -28,7 +28,7 @@ Reply via Green API          Dashboard / overrides (Phase 7)
 | Area | Path | Responsibility |
 |------|------|----------------|
 | API | `backend/app/api/` | Webhooks, health, dashboard (later) |
-| Agent | `backend/app/agent/` | LangGraph state, nodes, graph, prompts, triage |
+| Agent | `backend/app/agent/` | LangGraph state, nodes, graph, prompts, triage, reply composer |
 | Models | `backend/app/models/` | SQLAlchemy `patients`, `messages` |
 | Services | `backend/app/services/` | `intake`, `memory`, `whatsapp`, `slack`, `persist` |
 | Migrations | `backend/database/migrations/` | Alembic |

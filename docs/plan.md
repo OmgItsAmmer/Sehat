@@ -127,7 +127,8 @@ slot_check_node   → checks what info is missing
 gather_slots_node → asks only missing fields, loops back
 route_node        → assigns department
 notify_human_node → fires Slack
-confirm_user_node → final reply to patient
+confirm_user_node → sets reply_intent (structured instruction)
+compose_reply_node → rewrites reply_intent → natural patient-facing reply via LLM
 ```
 
 ---

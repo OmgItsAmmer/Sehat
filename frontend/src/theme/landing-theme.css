@@ -1,0 +1,253 @@
+/* Landing page tokens — Stitch screen aa22fcd86 (scoped; dashboard keeps stitch-theme.css) */
+.landing-page {
+  --color-on-surface: #131b2e;
+  --color-on-primary-container: #7f8397;
+  --color-surface-tint: #595e70;
+  --color-error: #ba1a1a;
+  --color-on-surface-variant: #46464c;
+  --color-tertiary: #000000;
+  --color-error-container: #ffdad6;
+  --color-on-primary-fixed-variant: #414658;
+  --color-secondary-container: #82f7df;
+  --color-on-tertiary-container: #f63a35;
+  --color-on-error-container: #93000a;
+  --color-on-secondary-fixed-variant: #005045;
+  --color-on-primary-fixed: #161b2b;
+  --color-on-tertiary: #ffffff;
+  --color-surface-container-lowest: #ffffff;
+  --color-tertiary-container: #410002;
+  --color-surface-container-high: #e2e7ff;
+  --color-on-secondary-container: #007162;
+  --color-on-background: #131b2e;
+  --color-on-tertiary-fixed-variant: #93000b;
+  --color-secondary: #006b5d;
+  --color-surface-bright: #faf8ff;
+  --color-on-tertiary-fixed: #410002;
+  --color-on-primary: #ffffff;
+  --color-primary-fixed: #dee1f7;
+  --color-on-secondary: #ffffff;
+  --color-primary-fixed-dim: #c2c6db;
+  --color-surface-dim: #d2d9f4;
+  --color-inverse-on-surface: #eef0ff;
+  --color-outline: #76767d;
+  --color-primary: #000000;
+  --color-primary-container: #161b2b;
+  --color-surface-container-highest: #dae2fd;
+  --color-background: #faf8ff;
+  --color-surface-container: #eaedff;
+  --color-on-error: #ffffff;
+  --color-surface-variant: #dae2fd;
+  --color-inverse-primary: #c2c6db;
+  --color-secondary-fixed: #82f7df;
+  --color-outline-variant: #c7c6cd;
+  --color-inverse-surface: #283044;
+  --color-tertiary-fixed: #ffdad6;
+  --color-surface-container-low: #f2f3ff;
+  --color-surface: #faf8ff;
+  --color-secondary-fixed-dim: #64dac4;
+  --color-on-secondary-fixed: #00201b;
+  --color-tertiary-fixed-dim: #ffb4ab;
+  --spacing-gutter: 24px;
+  --spacing-stack-md: 16px;
+  --spacing-container-max: 1200px;
+  --spacing-stack-xl: 64px;
+  --spacing-margin-desktop: 48px;
+  --spacing-stack-lg: 32px;
+  --spacing-margin-mobile: 16px;
+  --spacing-stack-sm: 8px;
+  --spacing-unit: 8px;
+  --radius-DEFAULT: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-full: 9999px;
+}
+
+.landing-page .font-headline-lg,
+.landing-page .font-headline-lg-mobile,
+.landing-page .font-headline-md,
+.landing-page .font-headline-sm {
+  font-family: var(--font-display);
+}
+.landing-page .font-body-lg,
+.landing-page .font-body-md,
+.landing-page .font-body-sm,
+.landing-page .font-label-caps {
+  font-family: var(--font-body);
+}
+.landing-page .font-label-urdu {
+  font-family: "Noto Nastaliq Urdu", serif;
+}
+
+.landing-page .text-headline-lg {
+  font-size: 40px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.landing-page .text-headline-lg-mobile {
+  font-size: 30px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+.landing-page .text-headline-md {
+  font-size: 24px;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+.landing-page .text-headline-sm {
+  font-size: 18px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+.landing-page .text-body-lg {
+  font-size: 18px;
+  line-height: 1.6;
+}
+.landing-page .text-body-md {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.landing-page .text-body-sm {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.landing-page .text-label-caps {
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.landing-page .text-label-urdu {
+  font-size: 18px;
+  line-height: 2.5;
+}
+
+.landing-page .max-w-container-max {
+  max-width: var(--spacing-container-max);
+}
+.landing-page .px-margin-desktop {
+  padding-left: var(--spacing-margin-desktop);
+  padding-right: var(--spacing-margin-desktop);
+}
+@media (max-width: 768px) {
+  .landing-page .px-margin-desktop {
+    padding-left: var(--spacing-margin-mobile);
+    padding-right: var(--spacing-margin-mobile);
+  }
+}
+.landing-page .space-x-gutter > :not([hidden]) ~ :not([hidden]) {
+  margin-inline-start: var(--spacing-gutter);
+}
+.landing-page .gap-gutter {
+  gap: var(--spacing-gutter);
+}
+.landing-page .mb-stack-md {
+  margin-bottom: var(--spacing-stack-md);
+}
+.landing-page .mb-stack-sm {
+  margin-bottom: var(--spacing-stack-sm);
+}
+.landing-page .mb-stack-lg {
+  margin-bottom: var(--spacing-stack-lg);
+}
+.landing-page .mb-stack-xl {
+  margin-bottom: var(--spacing-stack-xl);
+}
+.landing-page .py-stack-md {
+  padding-top: var(--spacing-stack-md);
+  padding-bottom: var(--spacing-stack-md);
+}
+.landing-page .py-stack-xl {
+  padding-top: var(--spacing-stack-xl);
+  padding-bottom: var(--spacing-stack-xl);
+}
+.landing-page .pt-stack-xl {
+  padding-top: var(--spacing-stack-xl);
+}
+.landing-page .pb-stack-xl {
+  padding-bottom: var(--spacing-stack-xl);
+}
+.landing-page .p-stack-md {
+  padding: var(--spacing-stack-md);
+}
+.landing-page .gap-stack-lg {
+  gap: var(--spacing-stack-lg);
+}
+
+.landing-page .bg-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Landing-only token names (secondary-fixed, etc.) — utilities need explicit rules
+   because content is scanned before landing-theme overrides :root. */
+.landing-page .bg-secondary-fixed {
+  background-color: var(--color-secondary-fixed);
+}
+.landing-page .text-secondary-fixed {
+  color: var(--color-secondary-fixed);
+}
+.landing-page .text-on-secondary-fixed {
+  color: var(--color-on-secondary-fixed);
+}
+.landing-page .border-secondary-fixed {
+  border-color: var(--color-secondary-fixed);
+}
+.landing-page .border-secondary-fixed\/30 {
+  border-color: color-mix(in oklab, var(--color-secondary-fixed) 30%, transparent);
+}
+@media (hover: hover) {
+  .landing-page .hover\:text-secondary-fixed:hover {
+    color: var(--color-secondary-fixed);
+  }
+}
+
+/* Scroll / load reveal — landing page only */
+@keyframes landing-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.landing-page .landing-hero-in {
+  opacity: 0;
+  animation: landing-pop-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: var(--hero-delay, 0ms);
+}
+
+.landing-page .landing-reveal {
+  opacity: 0;
+  transform: translateY(32px) scale(0.96);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.landing-page .landing-reveal--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-page .landing-hero-in {
+    opacity: 1;
+    animation: none;
+  }
+
+  .landing-page .landing-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

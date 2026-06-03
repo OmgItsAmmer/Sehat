@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.dashboard import router as dashboard_router
 from app.api.health import router as health_router
 from app.api.human_override import router as human_override_router
+from app.api.web_chat import router as web_chat_router
 from app.api.whatsapp import router as whatsapp_router
 from app.database.session import db_is_available
 from app.services import memory
@@ -29,6 +30,7 @@ app = FastAPI(
 app.include_router(health_router)
 app.include_router(dashboard_router)
 app.include_router(human_override_router)
+app.include_router(web_chat_router)
 app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["whatsapp"])
 
 # Added last so it wraps all responses (including 500s) — otherwise browsers show CORS errors.
@@ -47,7 +49,8 @@ def on_startup() -> None:
     db_status = "connected" if db_is_available() else "off (memory-only cases)"
     console.info("Sehat ready — WhatsApp webhooks: POST /api/whatsapp/webhook")
     console.info(
-        "Clinic API: GET /api/cases, POST /api/cases/{phone}/override, POST /api/chat/message"
+        "Clinic API: GET /api/cases, POST /api/cases/{phone}/override | "
+        "Web chat: GET /api/web-chat/sessions/{id}, POST /api/web-chat/message"
     )
     console.info("Session memory: %s | Postgres: %s", backend, db_status)
     console.info("Process PID %s (only one 'make dev' should own port 8000)", os.getpid())

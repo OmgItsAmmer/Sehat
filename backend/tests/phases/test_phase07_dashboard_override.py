@@ -69,8 +69,15 @@ def test_override_upgrade_logs_audit_and_resumes(
     )
     chat = "79008887766@c.us"
     client_with_db.post(
-        "/api/chat/message",
-        json={"phone": chat, "body": "pain maybe serious"},
+        "/api/whatsapp/webhook",
+        json={
+            "typeWebhook": "incomingMessageReceived",
+            "senderData": {"chatId": chat, "senderName": "Test"},
+            "messageData": {
+                "typeMessage": "textMessage",
+                "textMessageData": {"textMessage": "pain maybe serious"},
+            },
+        },
     )
 
     state = asyncio.run(memory.load(chat))

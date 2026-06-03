@@ -1,0 +1,292 @@
+{
+  "designSystems": [
+    {
+      "name": "assets/4da99bf2335846afaf573d966c937696",
+      "designSystem": {
+        "displayName": "Sehat Clinical Intelligence",
+        "styleGuidelines": "## Brand & Style\nThe design system is engineered for high-stakes clinical environments where cognitive load must be minimized and critical information prioritized. The brand personality is authoritative yet calm, utilizing a \"Linear-meets-Clinic\" aesthetic—meaning ultra-sharp execution, systematic organization, and high functional density without clutter.\n\nThe system adheres to the **Von Restorff Effect**, ensuring that emergency states (P1) are visually distinct from the routine dashboard environment. The emotional response is one of \"governed urgency\": the UI provides a sense of total control and absolute clarity. The style is **Modern Corporate with High-Contrast Utility**, leveraging generous whitespace to separate patient data streams while using aggressive visual cues for life-critical updates.\n\n## Layout & Spacing\nThe layout follows a **12-column fluid grid** for desktop and a **single-column vertical stack** for mobile. A strict 4px baseline grid ensures vertical rhythm.\n\n**Fitts’s Law Implementation:** All critical action buttons (e.g., \"Admit,\" \"Stat Order,\" \"Clear Alert\") must meet a minimum 48px touch target height to ensure accuracy during high-stress movements. \n\nData density is managed through **Progressive Disclosure**: the main dashboard shows high-level vitals, while clicking a patient record expands a \"Detail Drawer\" rather than navigating away, maintaining the clinician's context.\n\n## Elevation & Depth\nDepth is used to denote \"Current Focus\" and \"Urgency Level.\" \n- **Base Layer:** Background in Slate-50.\n- **Surface Layer:** Standard cards with a 1px `Slate-200` border and no shadow.\n- **Active Layer:** Elements currently being interacted with feature a subtle 4px blur, 5% opacity black shadow.\n- **Emergency Layer (P1):** These cards ignore standard elevation. They use a **2px solid Medical Red border** and a soft, pulsing red outer glow (0px 0px 12px rgba(220, 38, 38, 0.3)) to break the visual plane and demand immediate attention.\n\n## Components\n- **Buttons:** Primary buttons are Deep Teal. Emergency \"STAT\" buttons are Medical Red. All buttons have a 48px minimum height for critical paths.\n- **P1 Patient Cards:** Feature a 2px Medical Red border, a pulsing red icon next to the patient name, and a high-contrast white-on-red \"CRITICAL\" label.\n- **Status Chips:** Use a \"dot + label\" format. P1: Red dot, P2: Amber dot, P3: Slate dot.\n- **Input Fields:** Minimalist design with a 1px border. On focus, the border transitions to Deep Teal. Validation errors use Medical Red text.\n- **Clinical Lists:** High-density rows with 12px vertical padding. Every second row has a subtle Slate-50 background to improve horizontal tracking (Zebra striping).\n- **The \"Stat\" Banner:** A global notification component that appears at the top of the viewport in solid Medical Red for system-wide emergencies.",
+        "theme": {
+          "colorMode": "LIGHT",
+          "font": "PLUS_JAKARTA_SANS",
+          "roundness": "ROUND_FOUR",
+          "customColor": "#0d6e6e",
+          "headlineFont": "PLUS_JAKARTA_SANS",
+          "bodyFont": "INTER",
+          "labelFont": "INTER",
+          "namedColors": {
+            "background": "#f8f9ff",
+            "error": "#ba1a1a",
+            "error_container": "#ffdad6",
+            "inverse_on_surface": "#eaf1ff",
+            "inverse_primary": "#84d4d3",
+            "inverse_surface": "#213145",
+            "on_background": "#0b1c30",
+            "on_error": "#ffffff",
+            "on_error_container": "#93000a",
+            "on_primary": "#ffffff",
+            "on_primary_container": "#9dedec",
+            "on_primary_fixed": "#002020",
+            "on_primary_fixed_variant": "#004f50",
+            "on_secondary": "#ffffff",
+            "on_secondary_container": "#fffbff",
+            "on_secondary_fixed": "#410002",
+            "on_secondary_fixed_variant": "#93000b",
+            "on_surface": "#0b1c30",
+            "on_surface_variant": "#3e4948",
+            "on_tertiary": "#ffffff",
+            "on_tertiary_container": "#ffd9ae",
+            "on_tertiary_fixed": "#2a1700",
+            "on_tertiary_fixed_variant": "#653e00",
+            "outline": "#6e7979",
+            "outline_variant": "#bec9c8",
+            "primary": "#005454",
+            "primary_container": "#0d6e6e",
+            "primary_fixed": "#a0f0f0",
+            "primary_fixed_dim": "#84d4d3",
+            "secondary": "#bb0112",
+            "secondary_container": "#e02928",
+            "secondary_fixed": "#ffdad6",
+            "secondary_fixed_dim": "#ffb4ab",
+            "surface": "#f8f9ff",
+            "surface_bright": "#f8f9ff",
+            "surface_container": "#e5eeff",
+            "surface_container_high": "#dce9ff",
+            "surface_container_highest": "#d3e4fe",
+            "surface_container_low": "#eff4ff",
+            "surface_container_lowest": "#ffffff",
+            "surface_dim": "#cbdbf5",
+            "surface_tint": "#016a6a",
+            "surface_variant": "#d3e4fe",
+            "tertiary": "#6a4200",
+            "tertiary_container": "#8b5700",
+            "tertiary_fixed": "#ffddb8",
+            "tertiary_fixed_dim": "#ffb95f"
+          },
+          "designMd": "---\nname: Sehat Clinical Intelligence\ncolors:\n  surface: '#f8f9ff'\n  surface-dim: '#cbdbf5'\n  surface-bright: '#f8f9ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eff4ff'\n  surface-container: '#e5eeff'\n  surface-container-high: '#dce9ff'\n  surface-container-highest: '#d3e4fe'\n  on-surface: '#0b1c30'\n  on-surface-variant: '#3e4948'\n  inverse-surface: '#213145'\n  inverse-on-surface: '#eaf1ff'\n  outline: '#6e7979'\n  outline-variant: '#bec9c8'\n  surface-tint: '#016a6a'\n  primary: '#005454'\n  on-primary: '#ffffff'\n  primary-container: '#0d6e6e'\n  on-primary-container: '#9dedec'\n  inverse-primary: '#84d4d3'\n  secondary: '#bb0112'\n  on-secondary: '#ffffff'\n  secondary-container: '#e02928'\n  on-secondary-container: '#fffbff'\n  tertiary: '#6a4200'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#8b5700'\n  on-tertiary-container: '#ffd9ae'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#a0f0f0'\n  primary-fixed-dim: '#84d4d3'\n  on-primary-fixed: '#002020'\n  on-primary-fixed-variant: '#004f50'\n  secondary-fixed: '#ffdad6'\n  secondary-fixed-dim: '#ffb4ab'\n  on-secondary-fixed: '#410002'\n  on-secondary-fixed-variant: '#93000b'\n  tertiary-fixed: '#ffddb8'\n  tertiary-fixed-dim: '#ffb95f'\n  on-tertiary-fixed: '#2a1700'\n  on-tertiary-fixed-variant: '#653e00'\n  background: '#f8f9ff'\n  on-background: '#0b1c30'\n  surface-variant: '#d3e4fe'\ntypography:\n  display-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 48px\n    fontWeight: '700'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  headline-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.01em\n  headline-lg-mobile:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n  headline-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n  title-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: 28px\n  body-lg:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  label-md:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n  mono-clinical:\n    fontFamily: Inter\n    fontSize: 13px\n    fontWeight: '500'\n    lineHeight: 18px\n    letterSpacing: 0.05em\nrounded:\n  sm: 0.125rem\n  DEFAULT: 0.25rem\n  md: 0.375rem\n  lg: 0.5rem\n  xl: 0.75rem\n  full: 9999px\nspacing:\n  unit: 4px\n  container-padding: 24px\n  gutter: 16px\n  margin-mobile: 16px\n  touch-target-min: 48px\n---\n\n## Brand & Style\nThe design system is engineered for high-stakes clinical environments where cognitive load must be minimized and critical information prioritized. The brand personality is authoritative yet calm, utilizing a \"Linear-meets-Clinic\" aesthetic—meaning ultra-sharp execution, systematic organization, and high functional density without clutter.\n\nThe system adheres to the **Von Restorff Effect**, ensuring that emergency states (P1) are visually distinct from the routine dashboard environment. The emotional response is one of \"governed urgency\": the UI provides a sense of total control and absolute clarity. The style is **Modern Corporate with High-Contrast Utility**, leveraging generous whitespace to separate patient data streams while using aggressive visual cues for life-critical updates.\n\n## Colors\nThis design system utilizes a tiered semantic palette to drive clinical triaging:\n- **Primary (Deep Teal):** Used for navigation, primary actions, and stable patient states. It evokes trust and professional calm.\n- **Emergency (Medical Red):** Reserved strictly for P1 alerts, critical vitals, and immediate interventions.\n- **Urgent (Amber):** Used for P2 tasks—situations requiring attention within the hour but not currently life-threatening.\n- **Routine (Slate):** Used for P3/administrative tasks and secondary data points to reduce visual noise.\n\nThe background uses a cool Slate-50 to reduce glare, while surfaces remain pure white to maximize contrast for text legibility.\n\n## Typography\nThe typography strategy pairs **Plus Jakarta Sans** for headlines to provide a modern, approachable feel with **Inter** for all functional and data-heavy text. Inter was selected for its exceptional legibility in small sizes and high-density tables.\n\nFor clinical data (vitals, timestamps), a slightly wider letter spacing is applied to labels to ensure rapid scanning. Critical alerts (P1/P2) should utilize `title-lg` or `label-md` in uppercase to emphasize urgency.\n\n## Layout & Spacing\nThe layout follows a **12-column fluid grid** for desktop and a **single-column vertical stack** for mobile. A strict 4px baseline grid ensures vertical rhythm.\n\n**Fitts’s Law Implementation:** All critical action buttons (e.g., \"Admit,\" \"Stat Order,\" \"Clear Alert\") must meet a minimum 48px touch target height to ensure accuracy during high-stress movements. \n\nData density is managed through **Progressive Disclosure**: the main dashboard shows high-level vitals, while clicking a patient record expands a \"Detail Drawer\" rather than navigating away, maintaining the clinician's context.\n\n## Elevation & Depth\nDepth is used to denote \"Current Focus\" and \"Urgency Level.\" \n- **Base Layer:** Background in Slate-50.\n- **Surface Layer:** Standard cards with a 1px `Slate-200` border and no shadow.\n- **Active Layer:** Elements currently being interacted with feature a subtle 4px blur, 5% opacity black shadow.\n- **Emergency Layer (P1):** These cards ignore standard elevation. They use a **2px solid Medical Red border** and a soft, pulsing red outer glow (0px 0px 12px rgba(220, 38, 38, 0.3)) to break the visual plane and demand immediate attention.\n\n## Shapes\nThe design system uses a \"Soft\" corner logic (4px - 12px radii). This provides a professional, modern feel that is less aggressive than sharp corners but more serious and \"medical\" than fully rounded pill shapes. \n\nLarge containers like patient cards use `rounded-lg` (8px), while smaller utility elements like input fields and tags use the base `rounded` (4px).\n\n## Components\n- **Buttons:** Primary buttons are Deep Teal. Emergency \"STAT\" buttons are Medical Red. All buttons have a 48px minimum height for critical paths.\n- **P1 Patient Cards:** Feature a 2px Medical Red border, a pulsing red icon next to the patient name, and a high-contrast white-on-red \"CRITICAL\" label.\n- **Status Chips:** Use a \"dot + label\" format. P1: Red dot, P2: Amber dot, P3: Slate dot.\n- **Input Fields:** Minimalist design with a 1px border. On focus, the border transitions to Deep Teal. Validation errors use Medical Red text.\n- **Clinical Lists:** High-density rows with 12px vertical padding. Every second row has a subtle Slate-50 background to improve horizontal tracking (Zebra striping).\n- **The \"Stat\" Banner:** A global notification component that appears at the top of the viewport in solid Medical Red for system-wide emergencies.",
+          "colorVariant": "FIDELITY",
+          "overridePrimaryColor": "#0d6e6e",
+          "overrideSecondaryColor": "#dc2626",
+          "overrideTertiaryColor": "#f59e0b",
+          "overrideNeutralColor": "#64748b",
+          "spacingScale": 2,
+          "typography": {
+            "body-lg": {
+              "fontFamily": "Inter",
+              "fontSize": "16px",
+              "fontWeight": "400",
+              "lineHeight": "24px"
+            },
+            "body-md": {
+              "fontFamily": "Inter",
+              "fontSize": "14px",
+              "fontWeight": "400",
+              "lineHeight": "20px"
+            },
+            "display-lg": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "48px",
+              "fontWeight": "700",
+              "lineHeight": "56px",
+              "letterSpacing": "-0.02em"
+            },
+            "headline-lg": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "32px",
+              "fontWeight": "700",
+              "lineHeight": "40px",
+              "letterSpacing": "-0.01em"
+            },
+            "headline-lg-mobile": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "24px",
+              "fontWeight": "700",
+              "lineHeight": "32px"
+            },
+            "headline-md": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "24px",
+              "fontWeight": "600",
+              "lineHeight": "32px"
+            },
+            "label-md": {
+              "fontFamily": "Inter",
+              "fontSize": "12px",
+              "fontWeight": "600",
+              "lineHeight": "16px"
+            },
+            "mono-clinical": {
+              "fontFamily": "Inter",
+              "fontSize": "13px",
+              "fontWeight": "500",
+              "lineHeight": "18px",
+              "letterSpacing": "0.05em"
+            },
+            "title-lg": {
+              "fontFamily": "Inter",
+              "fontSize": "18px",
+              "fontWeight": "600",
+              "lineHeight": "28px"
+            }
+          },
+          "spacing": {
+            "container-padding": "24px",
+            "gutter": "16px",
+            "margin-mobile": "16px",
+            "touch-target-min": "48px",
+            "unit": "4px"
+          },
+          "headlineFontFamily": "Plus Jakarta Sans",
+          "bodyFontFamily": "Inter",
+          "labelFontFamily": "Inter"
+        }
+      },
+      "version": "1"
+    },
+    {
+      "name": "assets/aed0f923ca364baa9b1f27925c2879bf",
+      "designSystem": {
+        "displayName": "Sehat Design System",
+        "styleGuidelines": "## Brand & Style\n\nThe design system is engineered for high-stakes medical triage, balancing cutting-edge AI capability with a grounded, clinical trustworthiness essential for the Pakistani healthcare market. The aesthetic is **Corporate Modern** with a focus on precision and clarity. \n\nThe personality is authoritative yet empathetic, utilizing a \"Teal & Navy\" palette that moves away from sterile white-only environments toward a sophisticated, data-rich SaaS feel. We prioritize a low cognitive load to ensure users can navigate medical assessments without friction or panic. \n\nVisual signals include:\n- **Clinical Precision:** Use of fine lines and structured grids.\n- **AI Sophistication:** Subtle glows and depth to represent intelligent processing.\n- **Cultural Respect:** Seamless bilingual integration, ensuring Urdu and English feel like first-class citizens.\n\n## Layout & Spacing\n\nThe design system follows a **Fixed-Fluid hybrid grid**. Content is constrained to a 1200px max-width on desktop to ensure line lengths remain readable for medical information.\n\n- **Generous Whitespace:** We implement a \"Breathable Triage\" philosophy. Vertical stacking uses large increments (32px+) to separate distinct medical questions or sections, reducing anxiety.\n- **Grid:** A 12-column grid for desktop, 6-column for tablet, and 2-column for mobile.\n- **Safe Areas:** For mobile triage, primary action buttons must reside in the bottom \"thumb-zone\" with a minimum of 24px padding from the screen edge.\n\n## Elevation & Depth\n\nHierarchy is achieved through **Tonal Layers** supplemented by specific medical-tech glow effects.\n\n- **Base Layer:** #FAFAFA background.\n- **Card Layer:** Pure white surfaces with a soft 1px border (#E2E8F0) and no shadow for secondary info.\n- **Hero/Active Layer:** Primary medical cards use a subtle \"Teal Glow\" (a 0px 4px 20px shadow with 10% opacity of #0D9E8A) to signify AI-driven importance.\n- **Triage Overlays:** Use a 40% opacity Navy backdrop blur for modals to maintain context while focusing the user on the medical input.\n\n## Components\n\n### Buttons & CTAs\n- **Primary Teal:** Background #0D9E8A, Text #FFFFFF. Features a subtle inner-glow to look \"active.\"\n- **Secondary Navy:** Background #0A0F1E, Text #F1F5F9. Used for navigation.\n- **Triage Choice:** Large-format cards (16px radius) that highlight in Teal when selected.\n\n### Input Fields\n- High contrast borders (1px solid #CBD5E1) that thicken and change to Teal on focus.\n- Labels must include Urdu translations positioned top-right of the English label.\n\n### Medical Cards\n- Hero cards for triage results should use the 24px radius.\n- Use a 4px left-border accent color: Teal for \"Stable,\" Navy for \"Consultation Recommended,\" and Red for \"Emergency.\"\n\n### Chips\n- Used for symptoms (e.g., \"Fever,\" \"Cough\"). \n- Semi-transparent Teal backgrounds with dark Teal text. Pill-shaped (rounded-full).\n\n### Lists\n- Medical history or symptom lists should use 16px vertical spacing between items, with subtle dividers (#F1F5F9).",
+        "theme": {
+          "colorMode": "LIGHT",
+          "font": "PLUS_JAKARTA_SANS",
+          "roundness": "ROUND_EIGHT",
+          "customColor": "#0a0f1e",
+          "headlineFont": "PLUS_JAKARTA_SANS",
+          "bodyFont": "INTER",
+          "namedColors": {
+            "background": "#faf8ff",
+            "error": "#ba1a1a",
+            "error_container": "#ffdad6",
+            "inverse_on_surface": "#eef0ff",
+            "inverse_primary": "#c2c6db",
+            "inverse_surface": "#283044",
+            "on_background": "#131b2e",
+            "on_error": "#ffffff",
+            "on_error_container": "#93000a",
+            "on_primary": "#ffffff",
+            "on_primary_container": "#7f8397",
+            "on_primary_fixed": "#161b2b",
+            "on_primary_fixed_variant": "#414658",
+            "on_secondary": "#ffffff",
+            "on_secondary_container": "#007162",
+            "on_secondary_fixed": "#00201b",
+            "on_secondary_fixed_variant": "#005045",
+            "on_surface": "#131b2e",
+            "on_surface_variant": "#46464c",
+            "on_tertiary": "#ffffff",
+            "on_tertiary_container": "#f63a35",
+            "on_tertiary_fixed": "#410002",
+            "on_tertiary_fixed_variant": "#93000b",
+            "outline": "#76767d",
+            "outline_variant": "#c7c6cd",
+            "primary": "#000000",
+            "primary_container": "#161b2b",
+            "primary_fixed": "#dee1f7",
+            "primary_fixed_dim": "#c2c6db",
+            "secondary": "#006b5d",
+            "secondary_container": "#82f7df",
+            "secondary_fixed": "#82f7df",
+            "secondary_fixed_dim": "#64dac4",
+            "surface": "#faf8ff",
+            "surface_bright": "#faf8ff",
+            "surface_container": "#eaedff",
+            "surface_container_high": "#e2e7ff",
+            "surface_container_highest": "#dae2fd",
+            "surface_container_low": "#f2f3ff",
+            "surface_container_lowest": "#ffffff",
+            "surface_dim": "#d2d9f4",
+            "surface_tint": "#595e70",
+            "surface_variant": "#dae2fd",
+            "tertiary": "#000000",
+            "tertiary_container": "#410002",
+            "tertiary_fixed": "#ffdad6",
+            "tertiary_fixed_dim": "#ffb4ab"
+          },
+          "designMd": "---\nname: Sehat Design System\ncolors:\n  surface: '#faf8ff'\n  surface-dim: '#d2d9f4'\n  surface-bright: '#faf8ff'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f2f3ff'\n  surface-container: '#eaedff'\n  surface-container-high: '#e2e7ff'\n  surface-container-highest: '#dae2fd'\n  on-surface: '#131b2e'\n  on-surface-variant: '#46464c'\n  inverse-surface: '#283044'\n  inverse-on-surface: '#eef0ff'\n  outline: '#76767d'\n  outline-variant: '#c7c6cd'\n  surface-tint: '#595e70'\n  primary: '#000000'\n  on-primary: '#ffffff'\n  primary-container: '#161b2b'\n  on-primary-container: '#7f8397'\n  inverse-primary: '#c2c6db'\n  secondary: '#006b5d'\n  on-secondary: '#ffffff'\n  secondary-container: '#82f7df'\n  on-secondary-container: '#007162'\n  tertiary: '#000000'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#410002'\n  on-tertiary-container: '#f63a35'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#dee1f7'\n  primary-fixed-dim: '#c2c6db'\n  on-primary-fixed: '#161b2b'\n  on-primary-fixed-variant: '#414658'\n  secondary-fixed: '#82f7df'\n  secondary-fixed-dim: '#64dac4'\n  on-secondary-fixed: '#00201b'\n  on-secondary-fixed-variant: '#005045'\n  tertiary-fixed: '#ffdad6'\n  tertiary-fixed-dim: '#ffb4ab'\n  on-tertiary-fixed: '#410002'\n  on-tertiary-fixed-variant: '#93000b'\n  background: '#faf8ff'\n  on-background: '#131b2e'\n  surface-variant: '#dae2fd'\ntypography:\n  headline-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 40px\n    fontWeight: '700'\n    lineHeight: '1.2'\n    letterSpacing: -0.02em\n  headline-lg-mobile:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 30px\n    fontWeight: '700'\n    lineHeight: '1.2'\n    letterSpacing: -0.02em\n  headline-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: '1.3'\n    letterSpacing: -0.01em\n  headline-sm:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: '1.4'\n  body-lg:\n    fontFamily: Inter\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '1.6'\n  body-md:\n    fontFamily: Inter\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: '1.5'\n  body-sm:\n    fontFamily: Inter\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: '1.5'\n  label-urdu:\n    fontFamily: Noto Nastaliq Urdu\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: '2.5'\n  label-caps:\n    fontFamily: Inter\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: '1'\n    letterSpacing: 0.05em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  unit: 8px\n  container-max: 1200px\n  gutter: 24px\n  margin-mobile: 16px\n  margin-desktop: 48px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 32px\n  stack-xl: 64px\n---\n\n## Brand & Style\n\nThe design system is engineered for high-stakes medical triage, balancing cutting-edge AI capability with a grounded, clinical trustworthiness essential for the Pakistani healthcare market. The aesthetic is **Corporate Modern** with a focus on precision and clarity. \n\nThe personality is authoritative yet empathetic, utilizing a \"Teal & Navy\" palette that moves away from sterile white-only environments toward a sophisticated, data-rich SaaS feel. We prioritize a low cognitive load to ensure users can navigate medical assessments without friction or panic. \n\nVisual signals include:\n- **Clinical Precision:** Use of fine lines and structured grids.\n- **AI Sophistication:** Subtle glows and depth to represent intelligent processing.\n- **Cultural Respect:** Seamless bilingual integration, ensuring Urdu and English feel like first-class citizens.\n\n## Colors\n\nThe palette is anchored by **Deep Navy (#0A0F1E)**, which provides a sense of institutional stability and \"Hero\" status for primary navigation and surfaces. **Medical Teal (#0D9E8A)** serves as the primary action color, chosen for its association with health, calmness, and modern technology.\n\n- **Primary Hero (Navy):** Used for headers, footers, and primary container backgrounds.\n- **Primary Accent (Teal):** Used for all positive actions, progress bars, and \"AI Active\" states.\n- **Emergency (Red):** Reserved strictly for life-threatening triage results or critical errors.\n- **Surface Strategy:** The system defaults to a Light mode on **#FAFAFA** to maintain a clean, diagnostic environment, while Navy is used for high-impact structural blocks.\n\n## Typography\n\nThis design system utilizes a dual-font strategy to maximize readability and hierarchy:\n1. **Plus Jakarta Sans** is used for headlines. It should always be set with tight letter spacing (-0.01em to -0.02em) and bold weights to create a \"News-SaaS\" authoritative look.\n2. **Inter** is the workhorse for all body copy, forms, and technical medical data, ensuring legibility even at small sizes.\n3. **Noto Nastaliq Urdu** is integrated for bilingual support. Note that Urdu script requires significantly higher line-heights (2.0 - 2.5) than Latin script to prevent descender clipping; layout containers must account for this vertical expansion when Urdu is toggled.\n\n## Layout & Spacing\n\nThe design system follows a **Fixed-Fluid hybrid grid**. Content is constrained to a 1200px max-width on desktop to ensure line lengths remain readable for medical information.\n\n- **Generous Whitespace:** We implement a \"Breathable Triage\" philosophy. Vertical stacking uses large increments (32px+) to separate distinct medical questions or sections, reducing anxiety.\n- **Grid:** A 12-column grid for desktop, 6-column for tablet, and 2-column for mobile.\n- **Safe Areas:** For mobile triage, primary action buttons must reside in the bottom \"thumb-zone\" with a minimum of 24px padding from the screen edge.\n\n## Elevation & Depth\n\nHierarchy is achieved through **Tonal Layers** supplemented by specific medical-tech glow effects.\n\n- **Base Layer:** #FAFAFA background.\n- **Card Layer:** Pure white surfaces with a soft 1px border (#E2E8F0) and no shadow for secondary info.\n- **Hero/Active Layer:** Primary medical cards use a subtle \"Teal Glow\" (a 0px 4px 20px shadow with 10% opacity of #0D9E8A) to signify AI-driven importance.\n- **Triage Overlays:** Use a 40% opacity Navy backdrop blur for modals to maintain context while focusing the user on the medical input.\n\n## Shapes\n\nThe shape language is \"Approachable-Clinical.\" We avoid sharp corners to reduce the \"cold\" feeling of traditional medical software.\n\n- **Hero Cards:** Use a 24px radius for large triage summary cards or onboarding hero sections.\n- **Secondary Elements:** Use 16px for standard content cards and containers.\n- **Interactive Elements:** Buttons and form inputs use a 12px radius, providing a modern SaaS feel that is tactile and easy to tap on mobile devices.\n\n## Components\n\n### Buttons & CTAs\n- **Primary Teal:** Background #0D9E8A, Text #FFFFFF. Features a subtle inner-glow to look \"active.\"\n- **Secondary Navy:** Background #0A0F1E, Text #F1F5F9. Used for navigation.\n- **Triage Choice:** Large-format cards (16px radius) that highlight in Teal when selected.\n\n### Input Fields\n- High contrast borders (1px solid #CBD5E1) that thicken and change to Teal on focus.\n- Labels must include Urdu translations positioned top-right of the English label.\n\n### Medical Cards\n- Hero cards for triage results should use the 24px radius.\n- Use a 4px left-border accent color: Teal for \"Stable,\" Navy for \"Consultation Recommended,\" and Red for \"Emergency.\"\n\n### Chips\n- Used for symptoms (e.g., \"Fever,\" \"Cough\"). \n- Semi-transparent Teal backgrounds with dark Teal text. Pill-shaped (rounded-full).\n\n### Lists\n- Medical history or symptom lists should use 16px vertical spacing between items, with subtle dividers (#F1F5F9).",
+          "colorVariant": "FIDELITY",
+          "overridePrimaryColor": "#0a0f1e",
+          "overrideSecondaryColor": "#0d9e8a",
+          "overrideTertiaryColor": "#dc2626",
+          "overrideNeutralColor": "#0f172a",
+          "spacingScale": 2,
+          "typography": {
+            "body-lg": {
+              "fontFamily": "Inter",
+              "fontSize": "18px",
+              "fontWeight": "400",
+              "lineHeight": "1.6"
+            },
+            "body-md": {
+              "fontFamily": "Inter",
+              "fontSize": "16px",
+              "fontWeight": "400",
+              "lineHeight": "1.5"
+            },
+            "body-sm": {
+              "fontFamily": "Inter",
+              "fontSize": "14px",
+              "fontWeight": "400",
+              "lineHeight": "1.5"
+            },
+            "headline-lg": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "40px",
+              "fontWeight": "700",
+              "lineHeight": "1.2",
+              "letterSpacing": "-0.02em"
+            },
+            "headline-lg-mobile": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "30px",
+              "fontWeight": "700",
+              "lineHeight": "1.2",
+              "letterSpacing": "-0.02em"
+            },
+            "headline-md": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "24px",
+              "fontWeight": "700",
+              "lineHeight": "1.3",
+              "letterSpacing": "-0.01em"
+            },
+            "headline-sm": {
+              "fontFamily": "Plus Jakarta Sans",
+              "fontSize": "18px",
+              "fontWeight": "600",
+              "lineHeight": "1.4"
+            },
+            "label-caps": {
+              "fontFamily": "Inter",
+              "fontSize": "12px",
+              "fontWeight": "600",
+              "lineHeight": "1",
+              "letterSpacing": "0.05em"
+            },
+            "label-urdu": {
+              "fontFamily": "Noto Nastaliq Urdu",
+              "fontSize": "18px",
+              "fontWeight": "400",
+              "lineHeight": "2.5"
+            }
+          },
+          "spacing": {
+            "container-max": "1200px",
+            "gutter": "24px",
+            "margin-desktop": "48px",
+            "margin-mobile": "16px",
+            "stack-lg": "32px",
+            "stack-md": "16px",
+            "stack-sm": "8px",
+            "stack-xl": "64px",
+            "unit": "8px"
+          },
+          "headlineFontFamily": "Plus Jakarta Sans",
+          "bodyFontFamily": "Inter",
+          "labelFontFamily": "notoNastaliqUrdu"
+        }
+      },
+      "version": "1"
+    }
+  ]
+}

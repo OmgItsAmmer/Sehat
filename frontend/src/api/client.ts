@@ -1,7 +1,9 @@
+import { friendlyApiError } from "@/lib/userMessages";
 import type {
   Analytics,
   CaseDetail,
   CaseSummary,
+  WebChatSession,
   OverrideAction,
   OverrideResponse,
 } from "./types";
@@ -29,7 +31,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || `${res.status} ${res.statusText} (${url})`);
+    throw new Error(friendlyApiError(text || `${res.status} ${res.statusText}`));
   }
   return res.json() as Promise<T>;
 }
@@ -55,5 +57,14 @@ export const api = {
         receptionist_id: "sana",
         ...body,
       }),
+    }),
+
+  getWebSession: (sessionId: string) =>
+    request<WebChatSession>(`/api/web-chat/sessions/${encodeURIComponent(sessionId)}`),
+
+  sendWebChatMessage: (sessionId: string, body: string) =>
+    request<WebChatSession>("/api/web-chat/message", {
+      method: "POST",
+      body: JSON.stringify({ session_id: sessionId, body }),
     }),
 };

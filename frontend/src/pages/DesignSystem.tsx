@@ -56,7 +56,7 @@ export function DesignSystem() {
       <section className="mt-10">
         <h2 className="font-headline-md text-headline-md">Screen references</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {["clinic-dashboard", "analytics", "slack-card"].map((name) => (
+          {["landing-page", "clinic-dashboard", "analytics", "slack-card"].map((name) => (
             <figure
               key={name}
               className="overflow-hidden rounded-xl border border-outline-variant bg-surface"

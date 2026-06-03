@@ -8,7 +8,7 @@ import pytest
 from app.config import settings
 from app.database.base import Base
 from app.models import message, override, patient  # noqa: F401
-from app.services import memory
+from app.services import memory, web_memory
 from sqlalchemy import create_engine, event
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.compiler import compiles
@@ -32,10 +32,12 @@ async def _in_memory_sessions(monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()
     yield
     await memory.close_redis()
     memory.use_redis_client(None)
     await memory.clear_all()
+    await web_memory.clear_all()
 
 
 @pytest.fixture

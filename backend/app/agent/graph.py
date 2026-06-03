@@ -8,6 +8,7 @@ from langgraph.graph import END, START, StateGraph
 
 from app.agent import nodes
 from app.agent.state import TriageState
+from app.config import settings
 
 
 def _route_from_start(state: TriageState) -> str:
@@ -56,10 +57,17 @@ def _route_after_slot_check(state: TriageState) -> str:
 
 
 def _route_after_gather_slots(state: TriageState) -> str:
-    """Pause after asking a slot question; resume on the next message (Phase 6 memory)."""
+    """Pause after asking a slot question; resume on the next message."""
     if state.get("slots_complete"):
+        # Forced completion (max rounds) already has reply_intent — skip slot_check
+        # or slot_check would flip slots_complete back to False and loop forever.
+        if state.get("reply_intent"):
+            if state.get("escalated") or state.get("priority") in ("P1", "P2"):
+                return "notify_human"
+            return "confirm_user"
         return "slot_check"
-    return "__end__"
+    # Not done yet — compose the slot question and pause for patient reply.
+    return "compose_reply"
 
 
 def build_graph() -> StateGraph:
@@ -75,6 +83,8 @@ def build_graph() -> StateGraph:
     builder.add_node("notify_human", nodes.notify_human_node)
     builder.add_node("confirm_user", nodes.confirm_user_node)
     builder.add_node("await_human_review", nodes.await_human_review_node)
+    # Natural reply composer — every path ends here.
+    builder.add_node("compose_reply", nodes.compose_reply_node)
 
     builder.add_edge(START, "ingress")
     builder.add_conditional_edges(
@@ -101,7 +111,6 @@ def build_graph() -> StateGraph:
             "__end__": END,
         },
     )
-    builder.add_edge("await_human_review", END)
     builder.add_edge("route", "slot_check")
     builder.add_edge("emergency_exit", "notify_human")
     builder.add_edge("oos_exit", "confirm_user")
@@ -117,10 +126,18 @@ def build_graph() -> StateGraph:
     builder.add_conditional_edges(
         "gather_slots",
         _route_after_gather_slots,
-        {"slot_check": "slot_check", "__end__": END},
+        {
+            "slot_check": "slot_check",
+            "notify_human": "notify_human",
+            "confirm_user": "confirm_user",
+            "compose_reply": "compose_reply",
+        },
     )
     builder.add_edge("notify_human", "confirm_user")
-    builder.add_edge("confirm_user", END)
+    # All terminal paths converge at compose_reply → END
+    builder.add_edge("confirm_user", "compose_reply")
+    builder.add_edge("await_human_review", "compose_reply")
+    builder.add_edge("compose_reply", END)
 
     return builder
 
@@ -131,4 +148,10 @@ graph = build_graph().compile()
 
 def invoke_graph(state: TriageState) -> TriageState:
     """Run the compiled graph and return typed triage state."""
-    return cast(TriageState, graph.invoke(state))
+    return cast(
+        TriageState,
+        graph.invoke(
+            state,
+            config={"recursion_limit": settings.langgraph_recursion_limit},
+        ),
+    )

@@ -54,7 +54,7 @@ Sehat is an **agentic intake triage system** — not a chatbot. It operates as a
 
 - Receives patient messages from **WhatsApp, web, or voice**
 - **Classifies urgency** (P1 Emergency → P2 Urgent → P3 Routine → Out of Scope) with a confidence score
-- **Conducts a focused conversation** — asks only what it doesn't already know
+- **Conducts a focused, natural conversation** — replies warmly in the patient's language (English / Urdu / Roman Urdu), answers greetings before asking clinical questions, and gently redirects off-topic messages
 - **Escalates P1 cases immediately** with a Slack alert, bypassing all conversation steps
 - **Packages a complete handoff** — patient name, symptoms, history, priority — before a human ever reads it
 - **Remembers returning patients** across sessions

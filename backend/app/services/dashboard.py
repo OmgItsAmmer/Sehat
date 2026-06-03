@@ -9,9 +9,21 @@ from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from app.agent.state import TriageState, latest_message
-from app.services import memory
+from app.channels import WEB_SESSION_ID_PREFIX
+from app.services import memory, web_memory
 
-CaseSource = Literal["session", "database", "both"]
+CaseSource = Literal["session", "database", "both", "web"]
+
+
+def is_web_session_id(phone: str) -> bool:
+    return phone.startswith(WEB_SESSION_ID_PREFIX)
+
+
+def _display_name(phone: str) -> str:
+    if is_web_session_id(phone):
+        short = phone[len(WEB_SESSION_ID_PREFIX) :][:8]
+        return f"Web chat · {short}"
+    return phone.replace("@c.us", "").replace("@g.us", "")
 
 
 def _state_to_case(
@@ -19,9 +31,12 @@ def _state_to_case(
 ) -> dict[str, Any]:
     messages = state.get("messages") or []
     slots = state.get("slots") or {}
+    last_activity_at = state.get("last_activity_at")
+    if not last_activity_at and messages:
+        last_activity_at = datetime.now(UTC).isoformat()
     return {
         "phone": phone,
-        "display_name": phone.replace("@c.us", "").replace("@g.us", ""),
+        "display_name": _display_name(phone),
         "priority": state.get("priority"),
         "confidence": state.get("confidence") or 0.0,
         "reasoning": state.get("reasoning") or "",
@@ -35,7 +50,28 @@ def _state_to_case(
         "reply": state.get("reply") or "",
         "awaiting_human_review": bool(state.get("awaiting_human_review")),
         "source": source,
+        "last_activity_at": last_activity_at,
     }
+
+
+def _parse_activity_at(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=UTC)
+    return dt
+
+
+def _max_message_at(db_messages: list[dict[str, Any]]) -> str | None:
+    times = [_parse_activity_at(m.get("created_at")) for m in db_messages]
+    valid = [t for t in times if t is not None]
+    if not valid:
+        return None
+    return max(valid).isoformat()
 
 
 def _case_from_db_messages(phone: str, db_messages: list[dict[str, Any]]) -> dict[str, Any]:
@@ -46,7 +82,7 @@ def _case_from_db_messages(phone: str, db_messages: list[dict[str, Any]]) -> dic
     last_outbound = outbound[-1] if outbound else ""
     return {
         "phone": phone,
-        "display_name": phone.replace("@c.us", "").replace("@g.us", ""),
+        "display_name": _display_name(phone),
         "priority": None,
         "confidence": 0.0,
         "reasoning": "Persisted intake — no live triage session in Redis.",
@@ -60,32 +96,68 @@ def _case_from_db_messages(phone: str, db_messages: list[dict[str, Any]]) -> dic
         "reply": last_outbound,
         "awaiting_human_review": False,
         "source": "database",
+        "last_activity_at": _max_message_at(db_messages),
     }
 
 
+def _merge_last_activity(case: dict[str, Any], db_messages: list[dict[str, Any]]) -> None:
+    """Keep the newest timestamp from Redis session and Postgres messages."""
+    candidates: list[datetime] = []
+    for raw in (case.get("last_activity_at"), _max_message_at(db_messages)):
+        parsed = _parse_activity_at(raw) if isinstance(raw, str) else None
+        if parsed is not None:
+            candidates.append(parsed)
+    if candidates:
+        case["last_activity_at"] = max(candidates).isoformat()
+
+
 def _sort_cases(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    priority_order = {"P1": 0, "P2": 1, "P3": 2}
+    """Newest patient activity first."""
 
-    def sort_key(c: dict[str, Any]) -> tuple:
-        has_session = c.get("source") in ("session", "both")
-        return (
-            0 if has_session else 1,
-            priority_order.get(c.get("priority") or "", 99),
-            -(c.get("confidence") or 0),
-        )
+    def sort_key(c: dict[str, Any]) -> str:
+        return c.get("last_activity_at") or ""
 
-    cases.sort(key=sort_key)
+    cases.sort(key=sort_key, reverse=True)
     return cases
+
+
+async def _prune_orphan_sessions(db: Session) -> None:
+    """Drop Redis/web sessions with no matching patient row — keeps cache aligned with Postgres."""
+    from app.models.patient import Patient
+
+    db_phones = set(db.scalars(select(Patient.phone)).all())
+
+    for phone in await memory.list_phones():
+        if phone not in db_phones:
+            await memory.delete(phone)
+
+    for session_id in await web_memory.list_sessions():
+        if session_id not in db_phones:
+            await web_memory.delete(session_id)
+
+
+async def clear_all_sessions() -> None:
+    """Wipe WhatsApp + web triage sessions from Redis/in-memory (dev reset)."""
+    await memory.clear_all()
+    await web_memory.clear_all()
 
 
 async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
     """Merge active Redis triage sessions with patients who only exist in Postgres."""
+    if db is not None:
+        await _prune_orphan_sessions(db)
+
     by_phone: dict[str, dict[str, Any]] = {}
 
     for phone in await memory.list_phones():
         state = await memory.load(phone)
         if state.get("messages"):
             by_phone[phone] = _state_to_case(phone, state, source="session")
+
+    for session_id in await web_memory.list_sessions():
+        state = await web_memory.load(session_id)
+        if state.get("messages"):
+            by_phone[session_id] = _state_to_case(session_id, state, source="web")
 
     if db is not None:
         from app.models.patient import Patient
@@ -97,7 +169,8 @@ async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
             if not db_msgs:
                 continue
             if phone in by_phone:
-                by_phone[phone]["source"] = "both"
+                prev = by_phone[phone].get("source")
+                by_phone[phone]["source"] = "both" if prev in ("session", "web") else prev
                 db_count = len(db_msgs)
                 if db_count > (by_phone[phone].get("message_count") or 0):
                     by_phone[phone]["message_count"] = db_count
@@ -105,6 +178,7 @@ async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
                     inbound = [m["body"] for m in db_msgs if m["direction"] == "inbound"]
                     if inbound:
                         by_phone[phone]["last_message"] = inbound[-1]
+                _merge_last_activity(by_phone[phone], db_msgs)
             else:
                 by_phone[phone] = _case_from_db_messages(phone, db_msgs)
 
@@ -112,6 +186,21 @@ async def list_cases(*, db: Session | None = None) -> list[dict[str, Any]]:
 
 
 async def get_case(phone: str, *, db: Session | None = None) -> dict[str, Any] | None:
+    if is_web_session_id(phone):
+        state = await web_memory.load(phone)
+        if state.get("messages"):
+            case = _state_to_case(phone, state, source="web")
+            case["messages"] = list(state.get("messages") or [])
+            case["clarification_rounds"] = state.get("clarification_rounds") or 0
+            if db is not None:
+                case["db_messages"] = list_db_messages(db=db, phone=phone)
+                if case["db_messages"]:
+                    case["source"] = "both"
+                    _merge_last_activity(case, case["db_messages"])
+            else:
+                case["db_messages"] = []
+            return case
+
     state = await memory.load(phone)
     if state.get("messages"):
         case = _state_to_case(phone, state, source="session")

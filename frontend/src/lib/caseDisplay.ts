@@ -6,12 +6,22 @@ export function displayName(c: CaseSummary): string {
   return formatPhone(c.phone);
 }
 
+export function isWebSession(phone: string): boolean {
+  return phone.startsWith("ws_");
+}
+
 export function patientLabel(phone: string): string {
+  if (isWebSession(phone)) {
+    return `Web · ${phone.slice(3, 11)}`;
+  }
   const digits = formatPhone(phone);
   return `Patient ${digits.slice(-4)}`;
 }
 
 export function formatPhone(phone: string): string {
+  if (isWebSession(phone)) {
+    return phone.slice(3, 15);
+  }
   return phone.replace("@c.us", "").replace("@g.us", "");
 }
 

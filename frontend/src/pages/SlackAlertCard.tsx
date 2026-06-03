@@ -40,7 +40,7 @@ export function SlackAlertCard() {
     <div className="min-h-dvh bg-[#F8F8F8] p-8 font-body-md">
       <header className="mb-8 flex items-start justify-between">
         <div>
-          <Link to="/" className="font-label-md text-primary hover:underline">
+          <Link to="/dashboard" className="font-label-md text-primary hover:underline">
             ← Clinic dashboard
           </Link>
           <h1 className="mt-2 font-headline-lg text-headline-lg text-on-surface">

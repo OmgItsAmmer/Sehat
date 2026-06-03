@@ -125,6 +125,30 @@ def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     assert result.get("routed_to") == "general"
 
 
+@patch("app.agent.nodes.compose_reply", return_value="receptionist will follow up shortly")
+@patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
+def test_max_clarification_rounds_does_not_recursion_loop(_mock_slack, _mock_compose) -> None:
+    """Forced slot completion must not bounce gather_slots ↔ slot_check forever."""
+    result = graph.invoke(
+        {
+            "messages": ["appointment chahiye"],
+            "patient_phone": "+923001234567",
+            "priority": "P3",
+            "confidence": 0.88,
+            "clarification_rounds": 2,
+            "slots": {},
+            "slots_complete": False,
+            "routed_to": "general",
+            "escalated": False,
+            "reply": "",
+        }
+    )
+
+    assert result["escalated"] is True
+    assert result["slots_complete"] is True
+    assert result["reply"]
+
+
 @patch("app.agent.nodes.classify_message_with_openai")
 def test_low_confidence_routes_to_human_review(mock_classify) -> None:
     mock_classify.return_value = TriageResult(

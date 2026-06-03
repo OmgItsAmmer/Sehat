@@ -35,8 +35,12 @@ test-system:
 migrate:
 	cd backend && alembic upgrade head
 
+# Wipe Redis/in-memory triage sessions (dashboard queue). Does not touch Postgres.
+clear-sessions:
+	curl -s -X POST http://127.0.0.1:8000/api/dev/clear-sessions
+
 triage-scratch:
-	cd backend && python scripts/scratch_gemini_triage.py
+	cd backend && python scripts/scratch_openai_triage.py
 
 graph-scratch:
 	cd backend && python scripts/scratch_langgraph_triage.py
