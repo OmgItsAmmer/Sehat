@@ -87,23 +87,24 @@ From repo root:
 ```bash
 fly auth login
 cd backend
-fly launch --no-deploy
+fly launch --no-deploy --copy-config --region sin --no-db --no-redis -y
 ```
 
-When prompted:
+**Region:** Singapore = Fly code **`sin`** (not the word `singapore`). Confirm with `fly platform regions`.
 
-- **App name:** e.g. `sehat-api` (must be globally unique → `sehat-api-<yourname>`)
-- **Region:** nearest to users/demo (e.g. `sin` Singapore, `bom` Mumbai)
+If you prefer prompts instead of `-y`, still enter **`sin`** when asked for region.
+
+- **App name:** e.g. `sehat-api` (globally unique → `sehat-api-<yourname>` if taken)
 - **Postgres / Redis:** **No** — use Neon + Upstash
-- **Deploy now:** **No**
+- **Deploy now:** **No** (`--no-deploy`)
 
 This creates `backend/fly.toml`. Replace or merge with the cost-optimized template below.
 
 ### Recommended `backend/fly.toml`
 
 ```toml
-app = "sehat-api"          # your chosen name
-primary_region = "sin"     # your chosen region
+app = "sehat-api"          # your chosen name (globally unique)
+primary_region = "sin"     # Singapore — must be Fly code, not "singapore"
 
 [build]
   dockerfile = "Dockerfile"
@@ -119,17 +120,16 @@ primary_region = "sin"     # your chosen region
   min_machines_running = 0
   processes = ["app"]
 
-[[vm]]
-  size = "shared-cpu-1x"
-  memory = "256mb"
-
-[checks]
-  [checks.health]
+  [[http_service.checks]]
     grace_period = "20s"
     interval = "30s"
     method = "GET"
     path = "/health"
     timeout = "5s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
 ```
 
 > **Note:** Fly occasionally changes `fly.toml` schema. If `fly deploy` warns about deprecated keys, run `fly config save` after `fly launch` and re-apply the `http_service` / `vm` settings above.
@@ -138,22 +138,28 @@ primary_region = "sin"     # your chosen region
 
 ## 4. Set secrets (production env)
 
-Never commit secrets. Set them on Fly:
+Never commit secrets. **On Windows, do not paste bash `fly secrets set \` blocks** — PowerShell treats `\` differently and breaks on `&` in URLs.
 
-```bash
-cd backend
+1. Put production values in repo-root **`.env`** (`DATABASE_URL`, `REDIS_URL` = Upstash `rediss://...`, `OPENAI_API_KEY`, `GREEN_API_*`, optional `SLACK_WEBHOOK_URL`). Do **not** paste shell commands into `.env`.
+2. Run the project script (reads `.env`, calls `fly secrets import`):
 
-fly secrets set \
-  DATABASE_URL="postgresql+psycopg://..." \
-  REDIS_URL="rediss://default:...@....upstash.io:6379" \
-  GEMINI_API_KEY="..." \
-  GEMINI_MODEL="gemini-3-flash-preview" \
-  GREEN_API_INSTANCE="..." \
-  GREEN_API_TOKEN="..." \
-  SLACK_WEBHOOK_URL="https://hooks.slack.com/services/..."
+```powershell
+# From repo root (Windows 11)
+powershell -ExecutionPolicy Bypass -File backend\scripts\Set-FlySecrets.ps1
 ```
 
-Optional keys (if used): `CLERK_SECRET_KEY`, `OPENAI_API_KEY`.
+```powershell
+fly secrets list
+```
+
+Optional: different app name — `Set-FlySecrets.ps1 -App sehat-api-yourname`
+
+**Manual one-liner** (only if you skip the script; single quotes required for Neon `&`):
+
+```powershell
+cd backend
+fly secrets set DATABASE_URL='postgresql://USER:PASS@HOST/neondb?sslmode=require&channel_binding=require' REDIS_URL='rediss://default:TOKEN@HOST:6379' OPENAI_API_KEY='sk-...' GREEN_API_INSTANCE='...' GREEN_API_TOKEN='...'
+```
 
 List without values:
 

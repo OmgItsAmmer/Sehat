@@ -345,7 +345,7 @@ Keep Postgres on **Neon** (free tier) and Redis on **Upstash** (free tier). Fly 
 ```bash
 # one-time
 fly auth login
-cd backend && fly launch --no-deploy    # pick nearest region (e.g. sin, bom)
+cd backend && fly launch --no-deploy --copy-config --region sin --no-db --no-redis -y  # Singapore = sin
 fly secrets set DATABASE_URL=... REDIS_URL=... GEMINI_API_KEY=...   # see runbook
 make migrate                            # Neon — run from laptop, not on Fly
 fly deploy

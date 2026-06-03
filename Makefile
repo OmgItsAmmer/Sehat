@@ -1,4 +1,4 @@
-.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-phases test-system eval frontend-dev frontend-install
+.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-phases test-system eval frontend-dev frontend-install fly-secrets
 
 # Default: no --reload so webhook prints show in the terminal on Windows.
 dev:
@@ -14,6 +14,10 @@ kill-port:
 
 install-dev:
 	cd backend && pip install -r requirements-dev.txt
+
+# Windows: push repo-root .env to Fly (see backend/scripts/Set-FlySecrets.ps1)
+fly-secrets:
+	powershell -ExecutionPolicy Bypass -File backend/scripts/Set-FlySecrets.ps1
 
 lint:
 	cd backend && ruff check app tests && ruff format --check app tests && mypy app

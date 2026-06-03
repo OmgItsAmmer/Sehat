@@ -368,7 +368,7 @@ Production uses **Fly.io** for the FastAPI backend and **Vercel** for the React 
 ```bash
 # Backend (Fly.io)
 fly auth login
-cd backend && fly launch --no-deploy
+cd backend && fly launch --no-deploy --copy-config --region sin --no-db --no-redis -y
 fly secrets set DATABASE_URL=... REDIS_URL=...   # see runbook
 make migrate                                     # Neon, from laptop
 fly deploy
