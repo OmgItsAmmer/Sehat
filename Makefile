@@ -1,4 +1,4 @@
-.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-system eval frontend-dev frontend-install
+.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-phases test-system eval frontend-dev frontend-install
 
 # Default: no --reload so webhook prints show in the terminal on Windows.
 dev:
@@ -21,10 +21,13 @@ lint:
 test: test-unit test-integration test-system
 
 test-unit:
-	cd backend && pytest tests/unit -m unit -v
+	cd backend && pytest tests/unit tests/phases -m unit -v
 
 test-integration:
-	cd backend && pytest tests/integration -m integration -v
+	cd backend && pytest tests/integration tests/phases -m integration -v
+
+test-phases:
+	cd backend && pytest tests/phases -v
 
 test-system:
 	cd backend && pytest tests/system -m system -v

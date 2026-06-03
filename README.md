@@ -28,7 +28,7 @@
 
 <br/>
 
-[**Live Demo**](#) · [**Architecture**](docs/architecture.md) · [**Runbook**](docs/runbook_deploy.md) · [**Report a Bug**](#)
+[**Live Demo**](#) · [**Architecture**](docs/architecture.md) · [**Deploy runbook**](docs/runbooks/flyio-deploy_runbook.md) · [**Report a Bug**](#)
 
 <br/>
 
@@ -152,7 +152,7 @@ Full architecture notes: [`docs/architecture.md`](docs/architecture.md)
 | Voice | **OpenAI Whisper** | Voice messages → text before entering the graph |
 | Auth | **Clerk** | Dashboard login, one-line setup |
 | Migrations | **Alembic** | Never touch schema manually |
-| Deployment | **Docker Compose → Railway** | One command locally, one URL for demo |
+| Deployment | **Fly.io (API) + Vercel (frontend)** | Cheapest demo stack; Neon + Upstash for data |
 
 ---
 
@@ -214,9 +214,12 @@ sehat/
 ├── docs/
 │   ├── architecture.md
 │   ├── triage_logic.md
-│   ├── runbook_deploy.md
-│   ├── runbook_incident.md
-│   └── runbook_whatsapp_setup.md
+│   ├── plan.md
+│   ├── ci-cd.md
+│   └── runbooks/
+│       ├── flyio-deploy_runbook.md      # Fly API + Vercel dashboard
+│       ├── Green-api-whatsapp-integration_runbook.md
+│       └── alembic_migration_rubooks.md
 │
 ├── docker-compose.yml
 ├── Makefile
@@ -288,7 +291,7 @@ npm run dev               # Vite on :5173
 
 ### 5. Connect WhatsApp
 
-See [`docs/runbook_whatsapp_setup.md`](docs/runbook_whatsapp_setup.md) — takes about 20 minutes. You scan a QR code in the Green API console, paste your instance ID and token into `.env`, and set your webhook URL to `https://your-domain/api/whatsapp/webhook`.
+See [`docs/runbooks/Green-api-whatsapp-integration_runbook.md`](docs/runbooks/Green-api-whatsapp-integration_runbook.md) — takes about 20 minutes. You scan a QR code in the Green API console, paste your instance ID and token into `.env`, and set your webhook URL to `https://<api>.fly.dev/api/whatsapp/webhook` when deployed.
 
 ---
 
@@ -360,16 +363,22 @@ Full logic: [`docs/triage_logic.md`](docs/triage_logic.md)
 
 ## Deployment
 
-```bash
-# Local
-make up
+Production uses **Fly.io** for the FastAPI backend and **Vercel** for the React dashboard. Postgres stays on **Neon**; Redis on **Upstash** (both free tier).
 
-# Railway (production)
-railway login
-railway up
+```bash
+# Backend (Fly.io)
+fly auth login
+cd backend && fly launch --no-deploy
+fly secrets set DATABASE_URL=... REDIS_URL=...   # see runbook
+make migrate                                     # Neon, from laptop
+fly deploy
+
+# Frontend (Vercel) — import repo, root directory frontend/, set:
+#   VITE_API_URL=https://<your-api>.fly.dev
+# Or: cd frontend && vercel --prod
 ```
 
-See [`docs/runbook_deploy.md`](docs/runbook_deploy.md) for environment variable setup on Railway, custom domain, and Postgres provisioning.
+Full step-by-step (Fly `fly.toml`, Vercel env vars, Green API webhook, pre-demo checklist): [`docs/runbooks/flyio-deploy_runbook.md`](docs/runbooks/flyio-deploy_runbook.md).
 
 ---
 

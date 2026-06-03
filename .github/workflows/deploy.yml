@@ -1,4 +1,4 @@
-# CD: deploy to Railway after CI succeeds on main.
+# CD: deploy backend to Fly.io after CI succeeds on main.
 name: Deploy
 
 on:
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy to Railway
+    name: Deploy to Fly.io
     runs-on: ubuntu-latest
     if: >
       github.event_name == 'workflow_dispatch' ||
@@ -26,18 +26,15 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
+      - uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy backend
         working-directory: backend
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
         run: |
-          if [ -z "$RAILWAY_TOKEN" ]; then
-            echo "::error::RAILWAY_TOKEN secret is not set. Add it in GitHub → Settings → Secrets."
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "::error::FLY_API_TOKEN secret is not set. Run: fly tokens create deploy"
             exit 1
           fi
-          railway up --detach --ci
-        # Optional: pin service when the project has multiple services
-        # run: railway up --service sehat-api --detach --ci
+          flyctl deploy --remote-only

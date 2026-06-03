@@ -1,26 +1,27 @@
-# Fly.io deployment runbook (Sehat)
+# Fly.io + Vercel deployment runbook (Sehat)
 
-**Goal (phase 10):** Public HTTPS URL for the FastAPI backend (and optionally the React dashboard), at the lowest practical cost.
+**Goal (phase 10):** Public HTTPS URLs for the FastAPI backend and React dashboard, at the lowest practical cost.
 
 ```
-WhatsApp → Green API → https://<app>.fly.dev/api/whatsapp/webhook → LangGraph → Neon + Upstash
+WhatsApp → Green API → https://<api>.fly.dev/api/whatsapp/webhook → LangGraph → Neon + Upstash
+Receptionist → https://<app>.vercel.app → VITE_API_URL → Fly API
 ```
 
-**Code:** `backend/Dockerfile` · `backend/app/main.py`  
-**Time:** ~45 minutes first deploy · ~5 minutes per redeploy
+**Code:** `backend/Dockerfile` · `backend/app/main.py` · `frontend/` (Vercel)  
+**Time:** ~45 min first backend deploy · ~15 min first Vercel deploy · ~5 min per redeploy
 
 ---
 
 ## Cost strategy
 
-Do **not** provision Postgres or Redis on Fly.io for this project. Use external free tiers and run only the API container on Fly.
+Do **not** provision Postgres or Redis on Fly.io. Use external free tiers. Fly runs **only** the API container.
 
 | Component | Where | Why |
 |-----------|-------|-----|
 | FastAPI API | Fly.io | One `shared-cpu-1x` VM, 256MB RAM |
-| PostgreSQL | [Neon](https://neon.tech) | Already used in Phase 2; free tier, no Fly Postgres bill |
+| PostgreSQL | [Neon](https://neon.tech) | Already used in Phase 2; free tier |
 | Redis | [Upstash](https://upstash.com) | Free serverless Redis; session memory from Phase 6 |
-| Frontend | Fly static app *or* local `npm run dev` | Optional second free Fly machine |
+| Frontend (dashboard) | [Vercel](https://vercel.com) | Free hobby tier; static Vite build, global CDN |
 
 **Fly cost knobs** (set in `fly.toml`):
 
@@ -29,9 +30,9 @@ Do **not** provision Postgres or Redis on Fly.io for this project. Use external 
 - `auto_start_machines = true` — wakes on incoming webhook
 - `memory = "256mb"`, `cpu_kind = "shared"`, `cpus = 1` — smallest VM size
 
-Fly’s free allowance typically covers **three** shared-cpu-1x 256MB machines. This setup uses one for the API (and optionally one for the dashboard).
+Fly’s free allowance typically covers **three** shared-cpu-1x 256MB machines. This setup uses **one** (API only). Vercel hobby tier covers the dashboard at **$0** for demos.
 
-**Trade-off:** After idle, the first WhatsApp webhook may take **5–15 seconds** while the machine cold-starts. Send a test message or `curl /health` a minute before your demo.
+**Trade-off:** After idle, the first WhatsApp webhook may take **5–15 seconds** while the Fly machine cold-starts. Send a test message or `curl /health` a minute before your demo.
 
 ---
 
@@ -43,6 +44,7 @@ Fly’s free allowance typically covers **three** shared-cpu-1x 256MB machines. 
 | [Fly CLI](https://fly.io/docs/hands-on/install-flyctl/) | `fly version` |
 | Neon `DATABASE_URL` | Same string as local `.env` — see [`alembic_migration_rubooks.md`](alembic_migration_rubooks.md) |
 | Upstash Redis | Create a database → copy `rediss://...` URL |
+| [Vercel account](https://vercel.com/signup) | Hobby tier — dashboard deploy |
 | Green API instance | Authorized and online |
 | `.env` values | `GEMINI_API_KEY`, `GREEN_API_*`, `SLACK_WEBHOOK_URL`, etc. |
 
@@ -197,54 +199,77 @@ Details: [`Green-api-whatsapp-integration_runbook.md`](Green-api-whatsapp-integr
 
 ---
 
-## 7. Frontend (optional, still cheap)
+## 7. Deploy frontend on Vercel
 
-The dashboard is a separate Vite app. Two options:
+The receptionist dashboard lives in `frontend/`. Deploy it on **Vercel** (not Fly) so the API stays on a single cheap Fly machine.
 
-### A — Local dashboard, live API (cheapest)
+**Deploy the Fly API first** (sections 3–5). You need the live API URL for `VITE_API_URL`.
 
-In `frontend/.env`:
+### 7.1 SPA routing (`vercel.json`)
 
-```env
-VITE_API_BASE_URL=https://<your-app>.fly.dev
+React Router uses client-side routes (`/cases/:phone`, `/analytics`, …). The repo includes `frontend/vercel.json` so deep links work on refresh:
+
+```json
+{ "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }] }
+```
+### 7.2 Connect repo to Vercel
+
+1. Sign in at [vercel.com](https://vercel.com) → **Add New Project** → import this GitHub repo.
+2. **Root Directory:** `frontend` (Edit → set to `frontend`).
+3. **Framework Preset:** Vite (auto-detected).
+4. **Build Command:** `npm run build` (default).
+5. **Output Directory:** `dist` (default for Vite).
+
+### 7.3 Environment variables (Vercel dashboard)
+
+Project → **Settings → Environment Variables**:
+
+| Name | Value | Environments |
+|------|-------|--------------|
+| `VITE_API_URL` | `https://<your-app>.fly.dev` | Production (and Preview if you want staging) |
+
+No trailing slash. This is baked in at **build time** — change it in Vercel and redeploy if the Fly app URL changes.
+
+Local dev stays unchanged: leave `VITE_API_URL` empty in `.env.development` and use the Vite proxy.
+
+### 7.4 Deploy
+
+Click **Deploy**, or push to the connected branch. Vercel assigns a URL like:
+
+```
+https://sehat-<team>.vercel.app
 ```
 
-```bash
-make frontend-dev
-```
+Optional: **Settings → Domains** for a custom domain.
 
-Open the local Vite URL; it calls the Fly API. **Zero extra Fly machines.**
+### 7.5 Verify dashboard → API
 
-### B — Static dashboard on Fly (second free VM)
+1. Open the Vercel URL in a browser.
+2. DevTools → Network: requests should go to `https://<your-app>.fly.dev/api/...`.
+3. Confirm cases load and override buttons work.
 
-1. Build with the live API URL:
+The FastAPI app already allows cross-origin requests (`CORS allow_origins=["*"]`), so the Vercel origin can call the Fly API when `VITE_API_URL` is set.
 
-   ```bash
-   cd frontend
-   echo "VITE_API_BASE_URL=https://<your-app>.fly.dev" > .env.production
-   npm run build
-   ```
+### 7.6 Redeploy frontend
 
-2. From `frontend/`, create a minimal static Fly app (one-time):
+- **Automatic:** push to the branch Vercel watches (usually `main`).
+- **Manual:** Vercel dashboard → **Deployments → Redeploy**.
+- **CLI:** `npm i -g vercel && cd frontend && vercel --prod`
 
-   ```bash
-   fly launch --no-deploy --name sehat-dashboard
-   ```
-
-3. Use a static `Dockerfile` (nginx serving `dist/`) or Fly’s [static asset pattern](https://fly.io/docs/languages-and-frameworks/static/). Set the same `auto_stop_machines` / `min_machines_running = 0` in `fly.toml`.
-
-4. `fly deploy` from `frontend/`.
-
-For a hackathon demo, **option A is enough**.
+After changing `VITE_API_URL`, trigger a new production deploy so the build picks up the value.
 
 ---
 
 ## 8. Redeploy after code changes
 
+**Backend:**
+
 ```bash
 cd backend
 fly deploy
 ```
+
+**Frontend:** push to Git (Vercel auto-builds) or `vercel --prod` from `frontend/`.
 
 If you changed the DB schema:
 
@@ -258,15 +283,18 @@ fly deploy      # only if application code changed
 ## 9. Pre-demo checklist
 
 ```
-[ ] fly status shows app healthy (or will start on request)
-[ ] curl https://<app>.fly.dev/health → ok
+[ ] fly status shows API healthy (or will start on request)
+[ ] curl https://<api>.fly.dev/health → ok
 [ ] fly secrets list includes DATABASE_URL, REDIS_URL, GEMINI_*, GREEN_API_*, SLACK_*
 [ ] make migrate applied on Neon (alembic current = head)
-[ ] Green API webhook URL = https://<app>.fly.dev/api/whatsapp/webhook
+[ ] Green API webhook URL = https://<api>.fly.dev/api/whatsapp/webhook
 [ ] Test WhatsApp message received (fly logs)
 [ ] Slack P1 test alert received
-[ ] Cold-start ping sent ~1 min before live demo
-[ ] Three scripted scenarios (plan.md Phase 10) pass on live URL
+[ ] Vercel production URL opens dashboard
+[ ] VITE_API_URL on Vercel points at Fly API (redeploy if you changed it)
+[ ] Dashboard loads cases from live API (Network tab)
+[ ] Cold-start ping sent ~1 min before live demo (Fly API)
+[ ] Three scripted scenarios (plan.md Phase 10) pass on live URLs
 [ ] Screen recording backup recorded
 ```
 
@@ -282,6 +310,9 @@ fly deploy      # only if application code changed
 | Redis errors | Upstash URL or TLS | Use `rediss://` URL from Upstash console |
 | Migrations missing tables | Never ran `make migrate` | Run against Neon from laptop |
 | Secrets not picked up | Set after deploy | `fly secrets set ...` triggers redeploy automatically |
+| Dashboard empty / API errors | Wrong or missing `VITE_API_URL` | Set on Vercel → redeploy frontend |
+| Vercel 404 on refresh | No SPA rewrite | Add `frontend/vercel.json` (section 7.1) |
+| CORS blocked | Rare — API allows `*` | Ensure `VITE_API_URL` is full Fly URL, not relative |
 
 **Logs and SSH:**
 
@@ -308,7 +339,7 @@ fly apps destroy sehat-api
 
 ## 11. CI/CD (optional)
 
-GitHub Actions can deploy with `FLY_API_TOKEN`:
+**Backend (Fly.io)** — GitHub Actions with `FLY_API_TOKEN`:
 
 ```yaml
 - uses: superfly/flyctl-actions/setup-flyctl@master
@@ -320,17 +351,19 @@ GitHub Actions can deploy with `FLY_API_TOKEN`:
 
 Create token: `fly tokens create deploy -x 999999h`. Store as repo secret `FLY_API_TOKEN`.
 
-This replaces any Railway-based workflow when you switch CD over.
+**Frontend (Vercel)** — connect the repo in the Vercel dashboard (section 7). Vercel builds on push automatically; no extra workflow required unless you use [Vercel GitHub integration](https://vercel.com/docs/deployments/git) with preview deployments.
 
 ---
 
 ## Quick reference
 
-| Task | Command |
-|------|---------|
+| Task | Command / location |
+|------|-------------------|
 | Deploy API | `cd backend && fly deploy` |
-| Logs | `fly logs` |
-| Secrets | `fly secrets set KEY=value` |
-| Health | `curl https://<app>.fly.dev/health` |
+| Deploy dashboard | Vercel dashboard or `cd frontend && vercel --prod` |
+| API logs | `fly logs` |
+| API secrets | `fly secrets set KEY=value` |
+| API health | `curl https://<api>.fly.dev/health` |
+| Frontend env | Vercel → Settings → Environment Variables → `VITE_API_URL` |
 | Migrations | `make migrate` (Neon, local) |
-| Open dashboard | `fly dashboard` |
+| Fly dashboard | `fly dashboard` |

@@ -351,7 +351,7 @@ fly deploy
 # update GREEN_API webhook URL to https://<your-app>.fly.dev/api/whatsapp/webhook
 ```
 
-Full steps, `fly.toml` cost settings, frontend static deploy, and webhook checklist: [`docs/runbooks/flyio-deploy_runbook.md`](runbooks/flyio-deploy_runbook.md).
+Full steps, `fly.toml` cost settings, Vercel dashboard deploy, and webhook checklist: [`docs/runbooks/flyio-deploy_runbook.md`](runbooks/flyio-deploy_runbook.md).
 
 **Cost target (~$0/mo for a hackathon demo):**
 
@@ -360,7 +360,7 @@ Full steps, `fly.toml` cost settings, frontend static deploy, and webhook checkl
 | API | Fly.io | 1× `shared-cpu-1x` 256MB, `min_machines_running = 0`, auto-stop |
 | Postgres | Neon | Free — already wired in Phase 2 |
 | Redis | Upstash | Free — `REDIS_URL` from console |
-| Frontend (optional) | Fly.io static app | Second free machine, or run locally against live API |
+| Frontend (dashboard) | Vercel | Hobby tier — `VITE_API_URL` → Fly API |
 
 **Seed three demo scenarios** so any evaluator can test end to end without knowing what to type:
 
@@ -380,13 +380,14 @@ Scenario C — Out of scope
 
 **Pre-demo checklist:**
 ```
-[ ] WhatsApp webhook URL updated to live Fly.io domain (https://<app>.fly.dev/...)
+[ ] WhatsApp webhook URL updated to live Fly.io API (https://<api>.fly.dev/...)
+[ ] Vercel dashboard live; VITE_API_URL points at Fly API
 [ ] Slack workspace connected and test alert received
 [ ] Postgres migrations run against Neon (make migrate)
 [ ] Upstash Redis provisioned; REDIS_URL set as Fly secret
 [ ] fly secrets set for all keys in .env.example (nothing committed to git)
 [ ] First webhook after idle wakes the machine (~5–15s cold start — send a ping before demo)
-[ ] Three demo scenarios tested end to end on live URL
+[ ] Three demo scenarios tested end to end (WhatsApp + Vercel dashboard)
 [ ] Screen recording taken as backup
 ```
 

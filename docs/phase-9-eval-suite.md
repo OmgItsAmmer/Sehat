@@ -83,6 +83,6 @@ Keep `expected` one of `P1`, `P2`, `P3`, `OOS`.
 
 | Phase | Change |
 |-------|--------|
-| 10 | Deploy to Railway, seed demo scenarios, pre-demo checklist |
+| 10 | Deploy API to Fly.io, dashboard to Vercel, seed demo scenarios, pre-demo checklist |
 
 See [plan.md](./plan.md#phase-10--polish-and-deploy-day-89).

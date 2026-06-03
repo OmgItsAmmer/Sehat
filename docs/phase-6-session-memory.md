@@ -13,7 +13,7 @@
 Before Redis, session state lived in a **process-local dictionary**. That meant:
 
 - Restarting uvicorn wiped all conversations
-- Multiple workers (or Railway replicas) each had their own memory — a patient could get inconsistent replies
+- Multiple workers (or Fly.io replicas) each had their own memory — a patient could get inconsistent replies
 - Slot-filling only worked while the same process stayed up
 
 Phase 6 stores `TriageState` in **Redis** keyed by Green API `chatId`, with a **24-hour TTL** so stale threads expire automatically.
@@ -136,7 +136,7 @@ cd backend && REDIS_URL=redis://localhost:6379 pytest tests/unit/test_memory.py 
 - **Horizontal scaling:** Point every app instance at the same `REDIS_URL` so all workers share session keys.
 - **Privacy:** Session JSON contains message text; treat Redis like PHI-adjacent storage (network ACLs, no public exposure).
 - **Eviction:** TTL handles cleanup; no manual delete required for normal flows.
-- **Deploy:** Provision Redis on Railway (or Upstash) and set `REDIS_URL` in the service env.
+- **Deploy:** Provision Redis on Upstash and set `REDIS_URL` as a Fly secret (see [`flyio-deploy_runbook.md`](runbooks/flyio-deploy_runbook.md)).
 
 ---
 

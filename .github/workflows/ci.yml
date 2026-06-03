@@ -60,7 +60,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run unit tests
-        run: pytest tests/unit -m unit --cov=app --cov-report=term-missing -v
+        run: pytest tests/unit tests/phases -m "unit" --cov=app --cov-report=term-missing -v
 
   integration-tests:
     name: Integration tests
@@ -79,7 +79,7 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: Run integration tests
-        run: pytest tests/integration -m integration -v
+        run: pytest tests/integration tests/phases -m "integration" -v
 
   system-tests:
     name: System tests
@@ -112,4 +112,4 @@ jobs:
       && needs.system-tests.result == 'success' }}
     steps:
       - name: All CI jobs passed
-        run: echo "lint, unit, integration, and system jobs succeeded"
+        run: echo "lint, unit (incl. phase 1-9), integration, and system jobs succeeded"

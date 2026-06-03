@@ -12,6 +12,15 @@ markers = [
     "unit: fast tests with no I/O (pure logic)",
     "integration: in-process API tests via ASGI/TestClient",
     "system: end-to-end flows against the full application",
+    "phase1: Phase 1 — Green API webhook pipe",
+    "phase2: Phase 2 — Postgres message persistence",
+    "phase3: Phase 3 — Gemini classification",
+    "phase4: Phase 4 — LangGraph state machine",
+    "phase5: Phase 5 — WhatsApp + graph wiring",
+    "phase6: Phase 6 — session memory",
+    "phase7: Phase 7 — dashboard + human override",
+    "phase8: Phase 8 — specialist sub-agents",
+    "phase9: Phase 9 — classification eval suite",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:fastapi.*",

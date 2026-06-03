@@ -285,7 +285,7 @@ sequenceDiagram
 - Wire webhook → LangGraph triage (`backend/app/agent/`)
 - Reply via Green API `SendMessage` (`backend/app/services/whatsapp.py`)
 - Persist messages in Postgres (`backend/app/models/message.py`)
-- Deploy with a stable URL (Railway, etc.) — replace ngrok in `webhookUrl`
+- Deploy with a stable API URL (Fly.io) — replace ngrok in `webhookUrl`; see [`flyio-deploy_runbook.md`](flyio-deploy_runbook.md)
 
 ---
 

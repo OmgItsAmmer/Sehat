@@ -22,7 +22,7 @@ TEST_CASES: list[EvalCase] = [
     {"message": "bachay ko 3 din se tez bukhaar hai", "expected": "P2"},
     {"message": "suspected fracture in wrist", "expected": "P2"},
     {"message": "severe abdominal pain since last night", "expected": "P2"},
-    {"message": "bache ko abhi seizure aa gayi", "expected": "P2"},
+    {"message": "bache ko abhi tez jhatke aa rahe hain", "expected": "P2"},
     {"message": "bleeding after delivery need doctor urgently", "expected": "P2"},
     # P3 — routine (6)
     {"message": "appointment chahiye back pain ke liye", "expected": "P3"},
