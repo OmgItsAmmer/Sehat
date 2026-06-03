@@ -3,22 +3,9 @@
 from __future__ import annotations
 
 import pytest
-from app.config import settings
 from app.services import memory
 
 pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
-
-
-@pytest.fixture(autouse=True)
-async def _reset_memory(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(settings, "redis_url", "")
-    await memory.close_redis()
-    memory.use_redis_client(None)
-    await memory.clear_all()
-    yield
-    await memory.close_redis()
-    memory.use_redis_client(None)
-    await memory.clear_all()
 
 
 async def test_load_returns_fresh_state_for_unknown_phone() -> None:

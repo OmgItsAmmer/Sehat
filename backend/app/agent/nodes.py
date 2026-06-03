@@ -147,6 +147,17 @@ def notify_human_node(state: TriageState) -> dict:
     return {"slack_notified": sent}
 
 
+def await_human_review_node(state: TriageState) -> dict:
+    """Pause for receptionist override when classification confidence is low."""
+    return {
+        "awaiting_human_review": True,
+        "escalated": True,
+        "reply": (
+            "Thank you. A receptionist is reviewing your case and will confirm next steps shortly."
+        ),
+    }
+
+
 def confirm_user_node(state: TriageState) -> dict:
     """Final patient-facing reply when a node has not already set one."""
     if state.get("reply"):

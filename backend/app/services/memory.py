@@ -60,6 +60,16 @@ async def close_redis() -> None:
         _redis_client = None
 
 
+async def _invalidate_redis() -> None:
+    global _redis_client
+    if _redis_client is not None:
+        try:
+            await _redis_client.aclose()
+        except Exception:
+            pass
+    _redis_client = None
+
+
 def use_redis_client(client: aioredis.Redis | None) -> None:
     """Test helper — inject a FakeRedis instance."""
     global _redis_client
@@ -72,10 +82,14 @@ async def load(phone: str) -> TriageState:
     client = await get_redis()
 
     if client is not None:
-        raw = await client.get(key)
-        if raw:
-            return loads(phone, raw)
-        return fresh_state(phone)
+        try:
+            raw = await client.get(key)
+            if raw:
+                return loads(phone, raw)
+            return fresh_state(phone)
+        except Exception:
+            logger.warning("Redis load failed for %s — using in-memory fallback", phone)
+            await _invalidate_redis()
 
     raw = _FALLBACK.get(key)
     if raw:
@@ -90,8 +104,12 @@ async def save(phone: str, state: TriageState) -> None:
     client = await get_redis()
 
     if client is not None:
-        await client.set(key, payload, ex=SESSION_TTL_SECONDS)
-        return
+        try:
+            await client.set(key, payload, ex=SESSION_TTL_SECONDS)
+            return
+        except Exception:
+            logger.warning("Redis save failed for %s — using in-memory fallback", phone)
+            await _invalidate_redis()
 
     _FALLBACK[key] = payload
 
@@ -107,12 +125,22 @@ async def delete(phone: str) -> None:
 
 async def clear_all() -> None:
     """Test helper — wipe all sessions."""
+    global _redis_client
     _FALLBACK.clear()
     client = await get_redis()
     if client is None:
         return
-    async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
-        await client.delete(key)
+    try:
+        async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
+            await client.delete(key)
+    except Exception:
+        logger.warning("Redis unavailable during clear_all — resetting client")
+        if _redis_client is not None:
+            try:
+                await _redis_client.aclose()
+            except Exception:
+                pass
+        _redis_client = None
 
 
 async def list_phones() -> list[str]:
@@ -122,9 +150,13 @@ async def list_phones() -> list[str]:
     prefix_len = len(SESSION_KEY_PREFIX)
 
     if client is not None:
-        async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
-            phones.append(key[prefix_len:])
-        return sorted(phones)
+        try:
+            async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
+                phones.append(key[prefix_len:])
+            return sorted(phones)
+        except Exception:
+            logger.warning("Redis list_phones failed — using in-memory fallback")
+            await _invalidate_redis()
 
     for key in _FALLBACK:
         if key.startswith(SESSION_KEY_PREFIX):

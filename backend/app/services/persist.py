@@ -25,3 +25,17 @@ def persist_incoming_message(
     db.commit()
     db.refresh(msg)
     return msg
+
+
+def persist_outbound_message(*, db: Session, patient_phone: str, body: str) -> Message:
+    patient = db.scalar(select(Patient).where(Patient.phone == patient_phone))
+    if patient is None:
+        patient = Patient(phone=patient_phone)
+        db.add(patient)
+        db.flush()
+
+    msg = Message(patient_id=patient.id, direction="outbound", body=body, raw_payload=None)
+    db.add(msg)
+    db.commit()
+    db.refresh(msg)
+    return msg

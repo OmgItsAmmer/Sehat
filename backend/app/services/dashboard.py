@@ -15,7 +15,6 @@ from app.services import memory
 def _state_to_case(phone: str, state: TriageState) -> dict[str, Any]:
     messages = state.get("messages") or []
     slots = state.get("slots") or {}
-    chief = slots.get("chief_complaint") or (messages[0] if messages else "")
     return {
         "phone": phone,
         "display_name": phone.replace("@c.us", "").replace("@g.us", ""),
@@ -30,6 +29,7 @@ def _state_to_case(phone: str, state: TriageState) -> dict[str, Any]:
         "last_message": latest_message(state),
         "pending_slot": state.get("pending_slot"),
         "reply": state.get("reply") or "",
+        "awaiting_human_review": bool(state.get("awaiting_human_review")),
     }
 
 

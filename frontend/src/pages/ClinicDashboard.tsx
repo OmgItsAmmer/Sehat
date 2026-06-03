@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { OverrideButtons } from "@/components/dashboard/OverrideButtons";
 import { Icon } from "@/components/stitch/Icon";
 import { useBackendHealth, useCaseDetail, useCases } from "@/hooks/useCases";
 import {
@@ -15,6 +16,12 @@ import type { CaseDetail, CaseSummary, Priority } from "@/api/types";
 export function ClinicDashboard() {
   const { cases, loading, error, lastUpdated, refresh: refreshCases } = useCases();
   const { ok: backendOk } = useBackendHealth();
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.info("[Sehat] API base:", import.meta.env.VITE_API_URL || "http://127.0.0.1:8000 (default)");
+    }
+  }, []);
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState<Priority | "all">("all");
   const [bannerOpen, setBannerOpen] = useState(true);
@@ -59,6 +66,15 @@ export function ClinicDashboard() {
 
   return (
     <div className="flex min-h-dvh flex-col overflow-hidden bg-background font-body-md text-on-background">
+      {backendOk === false && (
+        <div className="relative z-50 bg-error-container px-container-padding py-2 text-on-error-container">
+          <p className="font-body-md text-body-md">
+            Backend offline — run <code className="font-mono-clinical">make dev</code> on port 8000,
+            then restart <code className="font-mono-clinical">make frontend-dev</code>.
+          </p>
+        </div>
+      )}
+
       {error && (
         <div className="relative z-50 bg-error-container px-container-padding py-2 text-on-error-container">
           <p className="font-body-md text-body-md">API error: {error}</p>
@@ -186,7 +202,10 @@ export function ClinicDashboard() {
                   {detailError}
                 </p>
               )}
-              <PatientHeader c={detail ?? selected} />
+              <PatientHeader
+                c={detail ?? selected}
+                onOverrideDone={() => void handleRefresh()}
+              />
               {detail?.reasoning && (
                 <section className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
                   <p className="mb-1 font-label-md text-label-md uppercase text-on-surface-variant">
@@ -278,7 +297,13 @@ function QueueCard({
   );
 }
 
-function PatientHeader({ c }: { c: CaseSummary }) {
+function PatientHeader({
+  c,
+  onOverrideDone,
+}: {
+  c: CaseSummary;
+  onOverrideDone: () => void;
+}) {
   const isP1 = c.priority === "P1";
   return (
     <div
@@ -324,6 +349,16 @@ function PatientHeader({ c }: { c: CaseSummary }) {
             </div>
           ))}
         </dl>
+      )}
+      {c.awaiting_human_review && (
+        <div className="mt-4 border-t border-outline-variant/30 pt-4">
+          <OverrideButtons
+            phone={c.phone}
+            priority={c.priority}
+            awaitingReview={!!c.awaiting_human_review}
+            onDone={onOverrideDone}
+          />
+        </div>
       )}
     </div>
   );

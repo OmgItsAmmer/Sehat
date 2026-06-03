@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
+from app.config import settings
 from app.database.base import Base
-from app.models import message, patient  # noqa: F401
+from app.models import message, override, patient  # noqa: F401
+from app.services import memory
 from sqlalchemy import create_engine, event
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.compiler import compiles
@@ -21,6 +23,19 @@ def _compile_uuid_sqlite(type_, compiler, **kw):  # noqa: ARG001
 @compiles(JSONB, "sqlite")
 def _compile_jsonb_sqlite(type_, compiler, **kw):  # noqa: ARG001
     return "JSON"
+
+
+@pytest.fixture(autouse=True)
+async def _in_memory_sessions(monkeypatch: pytest.MonkeyPatch) -> AsyncGenerator[None, None]:
+    """Unit tests never hit a live Redis — use in-memory session store."""
+    monkeypatch.setattr(settings, "redis_url", "")
+    await memory.close_redis()
+    memory.use_redis_client(None)
+    await memory.clear_all()
+    yield
+    await memory.close_redis()
+    memory.use_redis_client(None)
+    await memory.clear_all()
 
 
 @pytest.fixture

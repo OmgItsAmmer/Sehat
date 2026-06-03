@@ -6,19 +6,12 @@ from unittest.mock import patch
 
 import pytest
 from app.agent.triage import TriageResult
-from app.services import intake, memory
+from app.services import intake
 
 pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
 
 
-@pytest.fixture(autouse=True)
-async def _clear_memory() -> None:
-    await memory.clear_all()
-    yield
-    await memory.clear_all()
-
-
-@patch("app.services.intake.whatsapp.send_text", return_value=True)
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
 async def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> None:
     result = await intake.process_incoming_message(
@@ -33,7 +26,7 @@ async def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> N
     assert "1122" in _mock_send.call_args.kwargs["message"]
 
 
-@patch("app.services.intake.whatsapp.send_text", return_value=True)
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.classify_message_with_gemini")
 async def test_oos_message_sends_redirect_without_slack(
     mock_classify,
@@ -55,7 +48,7 @@ async def test_oos_message_sends_redirect_without_slack(
     _mock_send.assert_called_once()
 
 
-@patch("app.services.intake.whatsapp.send_text", return_value=True)
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.classify_message_with_gemini")
 async def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
     mock_classify.return_value = TriageResult(

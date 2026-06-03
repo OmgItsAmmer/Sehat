@@ -7,8 +7,6 @@ from typing import Annotated
 
 from typing_extensions import TypedDict
 
-from app.agent.specialists.general import REQUIRED_SLOTS
-
 # Hard override — LLM output ignored when matched (see README triage logic).
 P1_KEYWORDS: tuple[str, ...] = (
     "seene mein dard",
@@ -40,6 +38,8 @@ class TriageState(TypedDict, total=False):
     slack_notified: bool
     pending_slot: str | None
     reply: str
+    awaiting_human_review: bool
+    human_review_resolved: bool
 
 
 def fresh_state(patient_phone: str) -> TriageState:
@@ -58,6 +58,8 @@ def fresh_state(patient_phone: str) -> TriageState:
         "slack_notified": False,
         "pending_slot": None,
         "reply": "",
+        "awaiting_human_review": False,
+        "human_review_resolved": False,
     }
 
 

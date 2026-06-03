@@ -52,7 +52,12 @@ export function useCaseDetail(phone: string | undefined) {
       setError(null);
       return d;
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      if (!msg.includes("404") && !msg.includes("Case not found")) {
+        setError(msg);
+      } else {
+        setError(null);
+      }
       setDetail(null);
       throw e;
     } finally {

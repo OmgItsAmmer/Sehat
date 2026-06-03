@@ -1,4 +1,6 @@
-export type Priority = "P1" | "P2" | "P3" | null;
+export type Priority = "P1" | "P2" | "P3" | "OOS" | null;
+
+export type OverrideAction = "agree" | "upgrade" | "downgrade";
 
 export interface CaseSummary {
   phone: string;
@@ -14,6 +16,18 @@ export interface CaseSummary {
   last_message: string;
   pending_slot: string | null;
   reply: string;
+  awaiting_human_review?: boolean;
+}
+
+export interface OverrideResponse {
+  status: string;
+  phone: string;
+  original_priority: Priority;
+  priority: Priority;
+  action: OverrideAction;
+  reply: string;
+  awaiting_human_review?: boolean;
+  escalated?: boolean;
 }
 
 export interface CaseDetail extends CaseSummary {

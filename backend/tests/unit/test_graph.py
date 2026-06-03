@@ -123,3 +123,27 @@ def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     assert result["reply"]
     assert result.get("pending_slot") == "chief_complaint"
     assert result.get("routed_to") == "general"
+
+
+@patch("app.agent.nodes.classify_message_with_gemini")
+def test_low_confidence_routes_to_human_review(mock_classify) -> None:
+    mock_classify.return_value = TriageResult(
+        priority="P3",
+        confidence=0.6,
+        reasoning="Uncertain.",
+    )
+    result = graph.invoke(
+        {
+            "messages": ["not sure if urgent back pain"],
+            "patient_phone": "+923001234567",
+            "confidence": 0.0,
+            "clarification_rounds": 0,
+            "slots": {},
+            "slots_complete": False,
+            "escalated": False,
+            "reply": "",
+        }
+    )
+
+    assert result["awaiting_human_review"] is True
+    assert result.get("pending_slot") is None
