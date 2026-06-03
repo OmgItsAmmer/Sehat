@@ -8,11 +8,15 @@ Ask one question at a time. Be warm and concise.
 REQUIRED_SLOTS: tuple[str, ...] = (
     "chief_complaint",
     "symptom_duration",
+    "contact_phone",
     "preferred_day",
 )
 
 SLOT_QUESTIONS: dict[str, str] = {
     "chief_complaint": "What is the main problem or symptom we should know about?",
     "symptom_duration": "How long have you had this (hours, days, or weeks)?",
+    "contact_phone": (
+        "Please share the mobile number we should use for your appointment (e.g. 03XXXXXXXXX)."
+    ),
     "preferred_day": "Which day works best for an appointment (e.g. Monday, Wednesday)?",
 }

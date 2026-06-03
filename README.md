@@ -58,6 +58,8 @@ Sehat is an **agentic intake triage system** — not a chatbot. It operates as a
 - **Escalates P1 cases immediately** with a Slack alert, bypassing all conversation steps
 - **Packages a complete handoff** — patient name, symptoms, history, priority — before a human ever reads it
 - **Remembers returning patients** across sessions
+- Acts as a **clinic info desk** (RAG): hours, doctors, reception contact, and queue lookup by phone — alongside triage, not instead of it
+- **Books appointments automatically** after intake: 15-minute slots per doctor (9:00 AM–11:00 PM), separate calendars for general / pediatrics / cardiology
 - Lets the receptionist **override any classification** in one click, with the correction flowing back into the agent graph
 
 Sehat handles **~80% of intake autonomously.** The remaining 20% — ambiguous, complex, or emergency cases — reach a human faster and better-documented than before.
@@ -109,6 +111,15 @@ Sehat handles **~80% of intake autonomously.** The remaining 20% — ambiguous, 
               │         ┌─────────▼──────────┐
               │         │  Specialist Router  │
               │         │  Cardio·Paeds·Gen  │
+              │         └─────────┬──────────┘
+              │                   │
+              │         ┌─────────▼──────────┐
+              │         │ RAG Info Desk      │  ← hours, doctors, queue
+              │         │ pgvector + phone   │
+              │         └─────────┬──────────┘
+              │                   │
+              │         ┌─────────▼──────────┐
+              │         │ Appointment Booker │  ← 15 min slots / doctor
               │         └─────────┬──────────┘
               │                   │
               └──────┬────────────┘
@@ -382,14 +393,49 @@ Full step-by-step (Fly `fly.toml`, Vercel env vars, Green API webhook, pre-demo 
 
 ---
 
+## Clinic knowledge & scheduling
+
+After `make migrate`, seed the knowledge base (requires `OPENAI_API_KEY` and Postgres with **pgvector**):
+
+```bash
+make seed-kb
+```
+
+**Clinic facts** (in [`backend/data/clinic_kb.md`](backend/data/clinic_kb.md)):
+
+| Topic | Details |
+|-------|---------|
+| Hours | 9:00 AM – 11:00 PM |
+| Doctors | Dr Saeed Sarwar (general), Dr Ammer Saeed (pediatrics), Dr Muhid Saeed (cardiology) |
+| Reception | Fatima — **03236508184** |
+
+**Intake → booking flow (P2/P3; P1 emergencies skip scheduling):**
+
+1. Specialist slots (symptoms) + **contact phone** + **preferred day** for every route
+2. Bot states visit type (general / pediatrics / cardiology) and asks if the patient wants an appointment
+3. On **yes**, the next free **15-minute** slot is booked for that doctor on that day (first slot **9:00**, second **9:15**, …)
+4. Without a phone number, a **guest code** is issued — the patient must save it for queue lookups
+
+**Example patient phrases:**
+
+- `clinic timing kya hai` → RAG answer from seeded KB
+- `mera appointment 03001234567` → queue lookup from `appointments` table
+- `haan` after booking offer → confirms auto-scheduling
+
+Env (optional): `RAG_ENABLED=true`, `EMBEDDING_MODEL=text-embedding-3-small`, `RAG_TOP_K=3`
+
+---
+
 ## Roadmap
 
 - [ ] Voice call intake via Twilio
 - [ ] Urdu TTS responses for low-literacy patients  
-- [ ] RAG on clinic PDF — services, timings, doctor profiles
+- [x] RAG clinic knowledge base (markdown seed + pgvector)
+- [x] Per-doctor appointment booking (15-minute slots)
+- [ ] RAG on clinic PDF upload (replace markdown seed)
 - [ ] Multi-clinic support with tenant isolation
 - [ ] Analytics dashboard — P1 response time SLA tracking
-- [ ] Appointment calendar integration
+- [ ] Full calendar UI for receptionist
 
 ---
 

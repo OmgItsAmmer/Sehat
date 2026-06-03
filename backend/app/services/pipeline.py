@@ -12,7 +12,9 @@ from app.agent.graph import invoke_graph
 from app.agent.state import TriageState, fresh_state, latest_message, merge_state
 from app.channels import WEB, WHATSAPP
 from app.services import memory, web_memory, whatsapp
+from app.services.clinic_info import build_clinic_context
 from app.services.persist import persist_incoming_message, persist_intake_state, persist_outbound_message
+from app.services.scheduling import parse_appointment_consent
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,22 @@ def apply_intake_addendum(state: TriageState) -> dict[str, Any]:
     slots = dict(state.get("slots") or {})
     slots["preferred_time"] = text
     return {"slots": slots}
+
+
+def apply_appointment_consent(state: TriageState) -> dict[str, Any]:
+    """Parse yes/no when waiting for appointment booking consent."""
+    if not state.get("awaiting_appointment_consent"):
+        return {}
+    text = latest_message(state).strip()
+    if not text:
+        return {}
+    consent = parse_appointment_consent(text)
+    if consent is None:
+        return {}
+    return {
+        "appointment_consent": consent,
+        "awaiting_appointment_consent": False,
+    }
 
 
 def apply_pending_slot_answer(state: TriageState) -> dict[str, Any]:
@@ -144,6 +162,28 @@ async def _process_inbound(
     addendum_patch = apply_intake_addendum(state)
     if addendum_patch:
         state = merge_state(state, addendum_patch)
+    consent_patch = apply_appointment_consent(state)
+    if consent_patch:
+        state = merge_state(state, consent_patch)
+
+    skip_clinic_ctx = bool(
+        slot_patch
+        and "contact_phone" in (slot_patch.get("slots") or {})
+    )
+    if not skip_clinic_ctx:
+        contact = (state.get("slots") or {}).get("contact_phone")
+        clinic_ctx = build_clinic_context(
+            db=db,
+            message=body,
+            contact_phone_from_slots=contact,
+        )
+        if clinic_ctx:
+            state["clinic_context"] = clinic_ctx
+        else:
+            state.pop("clinic_context", None)
+    else:
+        state.pop("clinic_context", None)
+
     if slot_patch:
         for k, v in (slot_patch.get("slots") or {}).items():
             logger.info(
@@ -158,16 +198,22 @@ async def _process_inbound(
     await save(session_id, result)
 
     if db is not None:
-        persist_incoming_message(
-            db=db,
-            patient_phone=session_id,
-            body=body,
-            raw_payload=raw_payload,
-        )
-        persist_intake_state(db=db, patient_phone=session_id, state=result)
-        reply = (result.get("reply") or "").strip()
-        if reply:
-            persist_outbound_message(db=db, patient_phone=session_id, body=reply)
+        from app.database.session import rollback_db
+
+        try:
+            persist_incoming_message(
+                db=db,
+                patient_phone=session_id,
+                body=body,
+                raw_payload=raw_payload,
+            )
+            persist_intake_state(db=db, patient_phone=session_id, state=result)
+            reply = (result.get("reply") or "").strip()
+            if reply:
+                persist_outbound_message(db=db, patient_phone=session_id, body=reply)
+        except Exception:
+            rollback_db(db)
+            raise
 
     reply = (result.get("reply") or "").strip()
     if deliver_whatsapp and reply:

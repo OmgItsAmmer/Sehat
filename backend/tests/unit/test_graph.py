@@ -84,6 +84,7 @@ def test_p3_with_slots_routes_to_general(mock_classify) -> None:
             "slots": {
                 "chief_complaint": "back pain",
                 "symptom_duration": "1 week",
+                "contact_phone": "03001234567",
                 "preferred_day": "Wednesday",
             },
             "slots_complete": False,
@@ -95,6 +96,8 @@ def test_p3_with_slots_routes_to_general(mock_classify) -> None:
     assert result["priority"] == "P3"
     assert result["routed_to"] == "general"
     assert result["slots_complete"] is True
+    assert result.get("appointment_offered") is True
+    assert result.get("awaiting_appointment_consent") is True
     assert result["reply"]
 
 
@@ -171,3 +174,55 @@ def test_low_confidence_routes_to_human_review(mock_classify) -> None:
 
     assert result["awaiting_human_review"] is True
     assert result.get("pending_slot") is None
+
+
+@patch("app.agent.nodes.compose_reply", return_value="Appointment 9:15 par Dr Saeed ke paas.")
+@patch("app.agent.nodes.book_next_slot")
+@patch("app.database.session.db_is_available", return_value=True)
+@patch("app.database.session.get_sessionmaker")
+def test_book_appointment_after_consent(
+    mock_get_sm,
+    _mock_db_ok,
+    mock_book,
+    _mock_compose,
+) -> None:
+    from unittest.mock import MagicMock
+
+    mock_book.return_value = {
+        "appointment_date": "2026-06-05",
+        "appointment_time": "09:15",
+        "doctor_label": "Dr Saeed Sarwar (General)",
+        "patient_type": "general medicine",
+        "contact_phone": "03001234567",
+        "guest_code": "",
+        "slot_index": "1",
+    }
+    ctx = MagicMock()
+    ctx.__enter__.return_value = MagicMock()
+    ctx.__exit__.return_value = None
+    mock_get_sm.return_value = MagicMock(return_value=ctx)
+
+    result = graph.invoke(
+        {
+            "messages": ["haan book kar dein"],
+            "patient_phone": "+923001234567",
+            "priority": "P3",
+            "confidence": 0.9,
+            "slots": {
+                "chief_complaint": "back pain",
+                "symptom_duration": "1 week",
+                "contact_phone": "03001234567",
+                "preferred_day": "Thursday",
+            },
+            "slots_complete": True,
+            "routed_to": "general",
+            "appointment_offered": True,
+            "appointment_consent": True,
+            "escalated": False,
+            "reply": "",
+        }
+    )
+
+    assert result["appointment_booked"] is True
+    assert result["slots"]["appointment_time"] == "09:15"
+    mock_book.assert_called_once()

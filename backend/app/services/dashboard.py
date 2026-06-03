@@ -31,6 +31,14 @@ def _state_to_case(
 ) -> dict[str, Any]:
     messages = state.get("messages") or []
     slots = state.get("slots") or {}
+    appointment = None
+    if slots.get("appointment_time"):
+        appointment = {
+            "date": slots.get("appointment_date"),
+            "time": slots.get("appointment_time"),
+            "doctor": state.get("routed_to"),
+            "guest_code": state.get("guest_code"),
+        }
     last_activity_at = state.get("last_activity_at")
     if not last_activity_at and messages:
         last_activity_at = datetime.now(UTC).isoformat()
@@ -51,6 +59,9 @@ def _state_to_case(
         "awaiting_human_review": bool(state.get("awaiting_human_review")),
         "source": source,
         "last_activity_at": last_activity_at,
+        "appointment": appointment,
+        "appointment_booked": bool(state.get("appointment_booked")),
+        "guest_code": state.get("guest_code"),
     }
 
 

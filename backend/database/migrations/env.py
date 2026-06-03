@@ -7,7 +7,7 @@ from sqlalchemy import engine_from_config, pool
 
 from app.config import settings
 from app.database.base import Base
-from app.models import message, patient  # noqa: F401
+from app.models import appointment, clinic_chunk, message, patient  # noqa: F401
 
 config = context.config
 

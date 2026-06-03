@@ -88,7 +88,9 @@ async def test_post_intake_time_not_oos(mock_classify, _mock_compose, _mock_send
     await intake.process_incoming_message(chat_id=chat, body="headache for 2 days")
     await intake.process_incoming_message(chat_id=chat, body="headache")
     await intake.process_incoming_message(chat_id=chat, body="2 din")
+    await intake.process_incoming_message(chat_id=chat, body="03001234567")
     await intake.process_incoming_message(chat_id=chat, body="Thursday")
+    await intake.process_incoming_message(chat_id=chat, body="nahi")
     done = await intake.process_incoming_message(chat_id=chat, body="11:30pm")
 
     assert done.get("intake_confirmed") is True

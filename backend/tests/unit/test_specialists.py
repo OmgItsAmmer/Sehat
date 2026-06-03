@@ -41,6 +41,8 @@ def test_cardiology_profile_slots() -> None:
     profile = get_profile("cardiology")
     assert "pain_radiation" in profile.required_slots
     assert "pain_radiation" in profile.slot_questions
+    assert "preferred_day" in profile.required_slots
+    assert "contact_phone" in profile.required_slots
 
 
 @patch("app.agent.nodes.classify_message_with_openai")

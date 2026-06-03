@@ -17,6 +17,7 @@ def compose_reply(
     last_message: str,
     intent: str,
     filled_slots: dict[str, str] | None = None,
+    clinic_context: str = "",
     model: str | None = None,
 ) -> str:
     """
@@ -51,8 +52,10 @@ def compose_reply(
         slots_text = (
             "\n".join(f"  {k}: {v}" for k, v in (filled_slots or {}).items()) or "  (none yet)"
         )
+        context_block = f"\n\nCLINIC_CONTEXT:\n{clinic_context}" if clinic_context.strip() else ""
         user_content = (
-            f"LAST_MESSAGE:\n{last_message}\n\nFILLED_SLOTS:\n{slots_text}\n\nINTENT:\n{intent}"
+            f"LAST_MESSAGE:\n{last_message}\n\nFILLED_SLOTS:\n{slots_text}"
+            f"{context_block}\n\nINTENT:\n{intent}"
         )
 
         resp = client.chat.completions.create(

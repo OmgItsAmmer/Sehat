@@ -15,6 +15,12 @@ from app.agent.state import (
 )
 from app.agent.triage import classify_message_with_openai
 from app.services import slack
+from app.services.scheduling import (
+    DOCTOR_LABELS,
+    PATIENT_TYPE_LABELS,
+    book_next_slot,
+    normalize_phone,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -111,12 +117,23 @@ def emergency_exit_node(state: TriageState) -> dict:
 
 def oos_exit_node(state: TriageState) -> dict:
     """Out-of-scope redirect — no slot-filling."""
+    ctx = (state.get("clinic_context") or "").strip()
+    if ctx and "CLINIC_KNOWLEDGE" in ctx:
+        return {
+            "priority": "P3",
+            "slots_complete": True,
+            "reply_intent": (
+                "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
+                "Then ask if they have a health concern today."
+            ),
+        }
     return {
         "slots_complete": True,
         "reply_intent": (
             "OOS: the patient asked about something outside the bot's scope "
             "(billing, visa letters, lab printouts, pharmacy stock, or unrelated topics). "
-            "Warmly tell them those are handled at the City Medical Center reception. "
+            "Warmly tell them those are handled at the City Medical Center reception "
+            "(Fatima, 03236508184). "
             "Then ask if they have any health concern you can help with today. "
             "End with: Type *reset* to start a fresh conversation anytime."
         ),
@@ -213,6 +230,125 @@ def await_human_review_node(state: TriageState) -> dict:
     }
 
 
+def _can_offer_appointment(state: TriageState) -> bool:
+    if state.get("priority") == "P1":
+        return False
+    if state.get("priority") not in ("P2", "P3"):
+        return False
+    if not state.get("slots_complete"):
+        return False
+    if state.get("appointment_booked"):
+        return False
+    if state.get("appointment_offered") and state.get("awaiting_appointment_consent"):
+        return False
+    if state.get("appointment_offered"):
+        return False
+    return True
+
+
+def offer_appointment_node(state: TriageState) -> dict:
+    """After intake: tell patient type and ask if they want an appointment."""
+    routed = state.get("routed_to") or "general"
+    patient_type = PATIENT_TYPE_LABELS.get(routed, routed)
+    doctor = DOCTOR_LABELS.get(routed, routed)
+    preferred = (state.get("slots") or {}).get("preferred_day", "your preferred day")
+    return {
+        "appointment_offered": True,
+        "awaiting_appointment_consent": True,
+        "reply_intent": (
+            f"OFFER_APPOINTMENT: the visit is for {patient_type} with {doctor}. "
+            f"Tell the patient their case type in simple words (do not say P2/P3). "
+            f"Ask if they want to book an appointment on {preferred}. "
+            "Wait for yes or no — do not book yet."
+        ),
+    }
+
+
+def book_appointment_node(state: TriageState) -> dict:
+    """Book next 15-minute slot for the routed doctor."""
+    from app.database.session import db_is_available, get_sessionmaker
+
+    routed = state.get("routed_to") or "general"
+    slots = dict(state.get("slots") or {})
+    preferred_day = slots.get("preferred_day", "")
+    contact = normalize_phone(slots.get("contact_phone"))
+    session_phone = state.get("patient_phone", "unknown")
+
+    if not db_is_available():
+        return {
+            "appointment_booked": False,
+            "awaiting_appointment_consent": False,
+            "reply_intent": (
+                "BOOKING_UNAVAILABLE: apologize — automatic booking is temporarily unavailable. "
+                "Receptionist Fatima will call on 03236508184 to confirm."
+            ),
+        }
+
+    try:
+        SessionLocal = get_sessionmaker()
+        with SessionLocal() as db:
+            result = book_next_slot(
+                db,
+                doctor_key=routed,
+                preferred_day_text=preferred_day,
+                session_phone=session_phone,
+                contact_phone=contact,
+            )
+    except ValueError:
+        return {
+            "appointment_booked": False,
+            "awaiting_appointment_consent": False,
+            "reply_intent": (
+                "BOOKING_FULL: that day has no free slots for this doctor. "
+                "Ask them to pick another day or call Fatima at 03236508184."
+            ),
+        }
+    except Exception:
+        logger.exception("book_appointment failed")
+        return {
+            "appointment_booked": False,
+            "awaiting_appointment_consent": False,
+            "reply_intent": (
+                "BOOKING_ERROR: apologize and ask them to call reception Fatima at 03236508184."
+            ),
+        }
+
+    slots["appointment_date"] = result["appointment_date"]
+    slots["appointment_time"] = result["appointment_time"]
+    updates: dict = {
+        "slots": slots,
+        "appointment_booked": True,
+        "awaiting_appointment_consent": False,
+        "appointment_consent": None,
+        "reply_intent": (
+            f"BOOKED: appointment confirmed with {result['doctor_label']} on "
+            f"{result['appointment_date']} at {result['appointment_time']}. "
+            "Mention receptionist Fatima 03236508184 if they need to change it."
+        ),
+    }
+    if result.get("guest_code"):
+        updates["guest_code"] = result["guest_code"]
+        updates["reply_intent"] = (
+            f"BOOKED_GUEST: appointment on {result['appointment_date']} at "
+            f"{result['appointment_time']} with {result['doctor_label']}. "
+            f"IMPORTANT: tell them to remember guest code {result['guest_code']} "
+            "for future lookups (no phone on file). "
+            "Reception Fatima: 03236508184."
+        )
+    return updates
+
+
+def decline_appointment_node(state: TriageState) -> dict:
+    return {
+        "awaiting_appointment_consent": False,
+        "appointment_consent": None,
+        "reply_intent": (
+            "DECLINED: thank the patient. Say receptionist Fatima (03236508184) "
+            "can help if they change their mind. Do not ask more intake questions."
+        ),
+    }
+
+
 def confirm_user_node(state: TriageState) -> dict:
     """Set reply_intent for the happy-path confirmation (P2/P3 fully slotted)."""
     prior = (state.get("reply_intent") or "").strip()
@@ -233,13 +369,18 @@ def confirm_user_node(state: TriageState) -> dict:
             ),
         }
     if priority in ("P2", "P3"):
+        if state.get("appointment_booked"):
+            return {
+                "intake_confirmed": True,
+                "reply_intent": (
+                    "ADDENDUM: appointment already booked — acknowledge any new detail only."
+                ),
+            }
         return {
             "intake_confirmed": True,
             "reply_intent": (
-                f"CONFIRMED: the patient's case has been logged as {priority} priority "
-                f"and routed to {routed}. "
-                "Warmly confirm receipt and say they will hear back shortly "
-                "to confirm the appointment. "
+                f"CONFIRMED: the patient's case has been logged and routed to {routed}. "
+                "Warmly confirm receipt. "
                 "Do NOT ask for appointment time or any extra intake fields."
             ),
         }
@@ -285,9 +426,11 @@ def compose_reply_node(state: TriageState) -> dict:
         for slot_key, slot_val in filled_slots.items():
             logger.info("  SLOT filled  %-20s = %r", slot_key, slot_val)
 
+    clinic_context = (state.get("clinic_context") or "").strip()
     natural = compose_reply(
         last_message=last_message,
         intent=intent,
         filled_slots=filled_slots,
+        clinic_context=clinic_context,
     )
     return {"reply": natural, "reply_intent": ""}
