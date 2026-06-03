@@ -16,61 +16,52 @@ class TriageResult(BaseModel):
 
 
 @dataclass(frozen=True)
-class GeminiTriageConfig:
-    # Not "gemini-3.0-flash" — that id does not exist on the API.
-    model: str = "gemini-3-flash-preview"
+class OpenAITriageConfig:
+    model: str = "gpt-4o-mini"
 
 
-def _gemini_response_text(resp: object) -> str | None:
-    """Extract JSON text from a generate_content response."""
-    text = getattr(resp, "text", None)
-    if isinstance(text, str) and text:
-        return text
-
-    candidates = getattr(resp, "candidates", None)
-    if not candidates:
-        return None
+def _openai_response_text(resp: object) -> str | None:
+    """Extract JSON text from a chat completion response."""
     try:
-        first = candidates[0]
-        content = getattr(first, "content", None)
-        parts = getattr(content, "parts", None) if content is not None else None
-        if not parts:
+        choices = getattr(resp, "choices", None)
+        if not choices:
             return None
-        part_text = getattr(parts[0], "text", None)
-        return part_text if isinstance(part_text, str) else None
+        message = getattr(choices[0], "message", None)
+        content = getattr(message, "content", None) if message is not None else None
+        return content if isinstance(content, str) and content else None
     except (IndexError, TypeError):
         return None
 
 
-def classify_message_with_gemini(
+def classify_message_with_openai(
     message: str,
     *,
-    cfg: GeminiTriageConfig | None = None,
+    cfg: OpenAITriageConfig | None = None,
 ) -> TriageResult:
     """
-    Phase 3 scratch-call: one Gemini request returning structured triage JSON.
+    Phase 3 scratch-call: one OpenAI request returning structured triage JSON.
     """
-    if not settings.gemini_api_key:
-        raise RuntimeError("GEMINI_API_KEY is not configured")
+    if not settings.openai_api_key:
+        raise RuntimeError("OPENAI_API_KEY is not configured")
 
-    model = (cfg.model if cfg else settings.gemini_model) or GeminiTriageConfig.model
+    model = (cfg.model if cfg else settings.openai_model) or OpenAITriageConfig.model
 
     # Import lazily so tests don't require the dependency.
-    from google import genai
-    from google.genai import types
+    from openai import OpenAI
 
-    client = genai.Client(api_key=settings.gemini_api_key)
-
-    prompt = f"{TRIAGE_SYSTEM_PROMPT}\n\nMessage: {message}"
-    resp = client.models.generate_content(
+    client = OpenAI(api_key=settings.openai_api_key)
+    resp = client.chat.completions.create(
         model=model,
-        contents=prompt,
-        config=types.GenerateContentConfig(response_mime_type="application/json"),
+        messages=[
+            {"role": "system", "content": TRIAGE_SYSTEM_PROMPT},
+            {"role": "user", "content": message},
+        ],
+        response_format={"type": "json_object"},
     )
 
-    text = _gemini_response_text(resp)
+    text = _openai_response_text(resp)
     if not text:
-        raise RuntimeError("Gemini returned an empty response")
+        raise RuntimeError("OpenAI returned an empty response")
 
     data = json.loads(text)
     return TriageResult.model_validate(data)

@@ -30,7 +30,7 @@ def test_cardiology_required_slots_differ_from_general() -> None:
     assert "pain_radiation" not in general.required_slots
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_pediatrics_first_pending_slot(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P2", confidence=0.9, reasoning="Child fever."

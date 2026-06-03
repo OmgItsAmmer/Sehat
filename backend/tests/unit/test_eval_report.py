@@ -1,4 +1,4 @@
-"""Unit tests for Phase 9 eval report formatting (no live Gemini)."""
+"""Unit tests for Phase 9 eval report formatting (no live OpenAI)."""
 
 from __future__ import annotations
 

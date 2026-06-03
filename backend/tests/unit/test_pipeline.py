@@ -12,7 +12,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.asyncio]
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_low_confidence_pauses_for_human_review(mock_classify, _mock_send) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",
@@ -33,7 +33,7 @@ async def test_low_confidence_pauses_for_human_review(mock_classify, _mock_send)
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_while_awaiting_review_patient_gets_hold_message(mock_classify, mock_send) -> None:
     mock_classify.return_value = TriageResult(
         priority="P2",
@@ -53,7 +53,7 @@ async def test_while_awaiting_review_patient_gets_hold_message(mock_classify, mo
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_upgrade_override_resumes_and_replies(
     mock_classify,
     _mock_slack,

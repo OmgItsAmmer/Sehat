@@ -12,7 +12,7 @@ from app.agent.state import (
     latest_message,
     missing_slots,
 )
-from app.agent.triage import classify_message_with_gemini
+from app.agent.triage import classify_message_with_openai
 from app.services import slack
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ def _matches_p1_keywords(text: str) -> bool:
 
 
 def classify_node(state: TriageState) -> dict:
-    """Run Gemini triage on the latest patient message."""
+    """Run OpenAI triage on the latest patient message."""
     message = latest_message(state)
     if not message:
         return {
@@ -42,7 +42,7 @@ def classify_node(state: TriageState) -> dict:
             "reasoning": "P1 keyword override (hardcoded safety list).",
         }
 
-    result = classify_message_with_gemini(message)
+    result = classify_message_with_openai(message)
     updates: dict = {
         "priority": result.priority,
         "confidence": result.confidence,

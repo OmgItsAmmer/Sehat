@@ -31,7 +31,7 @@ async def test_scenario_p1_emergency(
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_scenario_oos_fee_question(
     mock_classify,
     mock_send,
@@ -53,7 +53,7 @@ async def test_scenario_oos_fee_question(
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_scenario_p3_slot_question_started(
     mock_classify,
     mock_send,

@@ -46,7 +46,7 @@ make test-system
 | `system` | `backend/tests/system/` | Full smoke flows (health + webhooks end-to-end) |
 | `phase1` … `phase9` | `backend/tests/phases/test_phaseNN_*.py` | One suite per [build phase](./plan.md) (1–9); run all with `make test-phases` |
 
-Phase suites mirror the plan’s acceptance criteria (webhook pipe → persistence → Gemini → graph → WhatsApp → memory → dashboard override → specialists → eval fixtures). CI runs phase tests inside the unit and integration jobs (no live Gemini or Redis).
+Phase suites mirror the plan’s acceptance criteria (webhook pipe → persistence → OpenAI classify → graph → WhatsApp → memory → dashboard override → specialists → eval fixtures). CI runs phase tests inside the unit and integration jobs with **empty `OPENAI_API_KEY`** and mocks — no billed API calls. Live accuracy checks stay manual: `make eval` (uses your `.env` key only when you run it locally).
 
 When PostgreSQL/Redis are added, extend **integration** tests with GitHub Actions `services:` containers and keep **system** tests for multi-step user journeys.
 

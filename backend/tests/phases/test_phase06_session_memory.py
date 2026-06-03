@@ -23,7 +23,7 @@ async def test_memory_round_trip_preserves_priority() -> None:
 
 @pytest.mark.integration
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_second_webhook_resumes_without_reclassify(
     mock_classify,
     _mock_send,
@@ -33,9 +33,7 @@ def test_second_webhook_resumes_without_reclassify(
     """Turn 2 keeps priority from turn 1 (ingress → slot_check, not classify)."""
     import asyncio
 
-    mock_classify.return_value = TriageResult(
-        priority="P3", confidence=0.9, reasoning="Routine."
-    )
+    mock_classify.return_value = TriageResult(priority="P3", confidence=0.9, reasoning="Routine.")
     payload = {**green_api_text_payload}
     payload["messageData"]["textMessageData"]["textMessage"] = "appointment chahiye back pain"
 
@@ -54,11 +52,9 @@ def test_second_webhook_resumes_without_reclassify(
 @pytest.mark.integration
 @pytest.mark.asyncio
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_intake_two_turn_slot_flow(mock_classify, _mock_send) -> None:
-    mock_classify.return_value = TriageResult(
-        priority="P3", confidence=0.9, reasoning="Routine."
-    )
+    mock_classify.return_value = TriageResult(priority="P3", confidence=0.9, reasoning="Routine.")
     chat = "79009990001@c.us"
     first = await intake.process_incoming_message(
         chat_id=chat, body="appointment chahiye back pain"

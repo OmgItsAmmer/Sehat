@@ -11,11 +11,7 @@ pytestmark = [pytest.mark.unit, pytest.mark.phase1]
 
 
 def test_whatsapp_webhook_route_registered() -> None:
-    paths = {
-        route.path
-        for route in app.routes
-        if isinstance(route, APIRoute)
-    }
+    paths = {route.path for route in app.routes if isinstance(route, APIRoute)}
     assert "/api/whatsapp/webhook" in paths
 
 

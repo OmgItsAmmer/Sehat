@@ -12,6 +12,32 @@ from fastapi.testclient import TestClient
 
 
 @pytest.fixture(autouse=True)
+def _no_live_api_keys(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Never use repo .env credentials in pytest (avoids OpenAI/Green API charges).
+
+    Tests that exercise LLM or outbound HTTP must mock the client or set a fake key
+    locally via a test fixture (e.g. openai_api_key + @patch('openai.OpenAI')).
+    """
+    monkeypatch.setattr(settings, "openai_api_key", "")
+    monkeypatch.setattr(settings, "openai_model", "gpt-4o-mini")
+    monkeypatch.setattr(settings, "green_api_instance", "")
+    monkeypatch.setattr(settings, "green_api_token", "")
+    monkeypatch.setattr(settings, "slack_webhook_url", "")
+    monkeypatch.setattr(settings, "database_url", "")
+    monkeypatch.setattr(settings, "redis_url", "")
+    monkeypatch.setenv("OPENAI_API_KEY", "")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    import app.database.session as db_session_module
+
+    monkeypatch.setattr(db_session_module, "_db_available", None)
+    monkeypatch.setattr(db_session_module, "_engine", None)
+    monkeypatch.setattr(db_session_module, "_SessionLocal", None)
+
+
+@pytest.fixture(autouse=True)
 async def _in_memory_sessions_for_http_tests(
     request: pytest.FixtureRequest,
     monkeypatch: pytest.MonkeyPatch,

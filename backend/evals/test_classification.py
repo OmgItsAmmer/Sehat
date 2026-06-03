@@ -120,9 +120,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    if not settings.gemini_api_key:
+    if not settings.openai_api_key:
         print(
-            "GEMINI_API_KEY is not set. Eval needs Gemini for non–P1-keyword cases.",
+            "OPENAI_API_KEY is not set. Eval needs OpenAI for non–P1-keyword cases.",
             file=sys.stderr,
         )
         return 1

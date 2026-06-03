@@ -1,4 +1,4 @@
-"""Phase 3 unit tests: Gemini triage classification (mocked — no live API in CI)."""
+"""Phase 3 unit tests: OpenAI triage classification (mocked — no live API in CI)."""
 
 from __future__ import annotations
 
@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from app.agent.triage import (
-    GeminiTriageConfig,
+    OpenAITriageConfig,
     TriageResult,
-    classify_message_with_gemini,
+    classify_message_with_openai,
 )
 from pydantic import ValidationError
 
@@ -17,24 +17,26 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
-def gemini_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.agent.triage.settings.gemini_api_key", "test-key")
-    monkeypatch.setattr("app.agent.triage.settings.gemini_model", "gemini-3-flash-preview")
+def openai_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.agent.triage.settings.openai_api_key", "test-key")
+    monkeypatch.setattr("app.agent.triage.settings.openai_model", "gpt-4o-mini")
 
 
-def _mock_gemini_response(payload: dict) -> MagicMock:
+def _mock_openai_response(payload: dict) -> MagicMock:
+    choice = MagicMock()
+    choice.message.content = json.dumps(payload)
     resp = MagicMock()
-    resp.text = json.dumps(payload)
+    resp.choices = [choice]
     return resp
 
 
-@patch("google.genai.Client")
+@patch("openai.OpenAI")
 def test_classify_returns_p1_for_chest_pain(
     mock_client_cls: MagicMock,
-    gemini_api_key: None,
+    openai_api_key: None,
 ) -> None:
     mock_client = mock_client_cls.return_value
-    mock_client.models.generate_content.return_value = _mock_gemini_response(
+    mock_client.chat.completions.create.return_value = _mock_openai_response(
         {
             "priority": "P1",
             "confidence": 0.96,
@@ -42,64 +44,66 @@ def test_classify_returns_p1_for_chest_pain(
         }
     )
 
-    result = classify_message_with_gemini("seene mein dard ho raha hai")
+    result = classify_message_with_openai("seene mein dard ho raha hai")
 
     assert result.priority == "P1"
     assert result.confidence == 0.96
     assert "chest" in result.reasoning.lower() or "cardiac" in result.reasoning.lower()
 
-    call_kwargs = mock_client.models.generate_content.call_args.kwargs
-    assert call_kwargs["model"] == "gemini-3-flash-preview"
-    assert "seene mein dard" in call_kwargs["contents"]
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    assert call_kwargs["model"] == "gpt-4o-mini"
+    assert call_kwargs["messages"][-1]["content"] == "seene mein dard ho raha hai"
 
 
-@patch("google.genai.Client")
+@patch("openai.OpenAI")
 def test_classify_uses_config_model_override(
     mock_client_cls: MagicMock,
-    gemini_api_key: None,
+    openai_api_key: None,
 ) -> None:
     mock_client = mock_client_cls.return_value
-    mock_client.models.generate_content.return_value = _mock_gemini_response(
+    mock_client.chat.completions.create.return_value = _mock_openai_response(
         {"priority": "P3", "confidence": 0.8, "reasoning": "Routine appointment request."}
     )
 
-    classify_message_with_gemini(
+    classify_message_with_openai(
         "appointment chahiye",
-        cfg=GeminiTriageConfig(model="gemini-3.5-flash"),
+        cfg=OpenAITriageConfig(model="gpt-4.1-mini"),
     )
 
-    assert mock_client.models.generate_content.call_args.kwargs["model"] == "gemini-3.5-flash"
+    assert mock_client.chat.completions.create.call_args.kwargs["model"] == "gpt-4.1-mini"
 
 
 def test_classify_raises_when_api_key_missing(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("app.agent.triage.settings.gemini_api_key", "")
+    monkeypatch.setattr("app.agent.triage.settings.openai_api_key", "")
 
-    with pytest.raises(RuntimeError, match="GEMINI_API_KEY is not configured"):
-        classify_message_with_gemini("hello")
+    with pytest.raises(RuntimeError, match="OPENAI_API_KEY is not configured"):
+        classify_message_with_openai("hello")
 
 
-@patch("google.genai.Client")
+@patch("openai.OpenAI")
 def test_classify_raises_on_empty_response(
     mock_client_cls: MagicMock,
-    gemini_api_key: None,
+    openai_api_key: None,
 ) -> None:
     mock_client = mock_client_cls.return_value
-    mock_client.models.generate_content.return_value = MagicMock(text=None, candidates=[])
+    mock_client.chat.completions.create.return_value = MagicMock(choices=[])
 
     with pytest.raises(RuntimeError, match="empty response"):
-        classify_message_with_gemini("hello")
+        classify_message_with_openai("hello")
 
 
-@patch("google.genai.Client")
+@patch("openai.OpenAI")
 def test_classify_raises_on_invalid_json(
     mock_client_cls: MagicMock,
-    gemini_api_key: None,
+    openai_api_key: None,
 ) -> None:
     mock_client = mock_client_cls.return_value
-    mock_client.models.generate_content.return_value = MagicMock(text="not json")
+    choice = MagicMock()
+    choice.message.content = "not json"
+    mock_client.chat.completions.create.return_value = MagicMock(choices=[choice])
 
     with pytest.raises(json.JSONDecodeError):
-        classify_message_with_gemini("hello")
+        classify_message_with_openai("hello")
 
 
 @pytest.mark.parametrize(

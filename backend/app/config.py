@@ -21,9 +21,9 @@ class Settings(BaseSettings):
     database_url: str = ""
     redis_url: str = ""
 
-    # LLM (Google AI / Gemini API — see ListModels for ids)
-    gemini_api_key: str = ""
-    gemini_model: str = "gemini-3-flash-preview"
+    # LLM (OpenAI API)
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4o-mini"
 
     slack_webhook_url: str = ""
 

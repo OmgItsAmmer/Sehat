@@ -31,7 +31,7 @@ async def test_webhook_p1_runs_graph_and_replies(
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_webhook_oos_scenario(
     mock_classify,
     mock_send,

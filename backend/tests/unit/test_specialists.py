@@ -43,7 +43,7 @@ def test_cardiology_profile_slots() -> None:
     assert "pain_radiation" in profile.slot_questions
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_p2_pediatrics_first_slot_question(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P2",
@@ -68,7 +68,7 @@ def test_p2_pediatrics_first_slot_question(mock_classify) -> None:
     assert "old" in result["reply"].lower()
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_p3_cardiology_routine_chest_keywords(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",

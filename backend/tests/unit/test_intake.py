@@ -27,7 +27,7 @@ async def test_p1_message_triggers_slack_and_reply(_mock_slack, _mock_send) -> N
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_oos_message_sends_redirect_without_slack(
     mock_classify,
     _mock_send,
@@ -49,7 +49,7 @@ async def test_oos_message_sends_redirect_without_slack(
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 async def test_p3_slot_flow_across_two_messages(mock_classify, mock_send) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",

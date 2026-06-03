@@ -21,7 +21,7 @@ def test_fresh_state_has_required_fields() -> None:
 
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
 def test_p1_keyword_traverses_emergency_path(_mock_slack) -> None:
-    with patch("app.agent.nodes.classify_message_with_gemini") as mock_gemini:
+    with patch("app.agent.nodes.classify_message_with_openai") as mock_gemini:
         result = invoke_graph(
             {
                 "messages": ["seene mein dard"],
@@ -44,7 +44,7 @@ def test_p1_keyword_traverses_emergency_path(_mock_slack) -> None:
     assert "1122" in result["reply"]
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_oos_exits_without_slot_filling(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="OOS",

@@ -15,25 +15,27 @@ from sqlalchemy.orm import Session
 pytestmark = [pytest.mark.integration, pytest.mark.phase7]
 
 
-def test_list_cases_includes_active_session(client: TestClient) -> None:
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
+@patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
+def test_list_cases_includes_active_session(
+    _mock_slack,
+    _mock_send,
+    client: TestClient,
+) -> None:
     import asyncio
 
     asyncio.run(memory.clear_all())
-    with (
-        patch("app.services.pipeline.whatsapp.send_text", return_value=True),
-        patch("app.agent.nodes.slack.send_triage_alert", return_value=True),
-    ):
-        client.post(
-            "/api/whatsapp/webhook",
-            json={
-                "typeWebhook": "incomingMessageReceived",
-                "senderData": {"chatId": "79001234567@c.us", "senderName": "Test"},
-                "messageData": {
-                    "typeMessage": "textMessage",
-                    "textMessageData": {"textMessage": "seene mein dard"},
-                },
+    client.post(
+        "/api/whatsapp/webhook",
+        json={
+            "typeWebhook": "incomingMessageReceived",
+            "senderData": {"chatId": "79001234567@c.us", "senderName": "Test"},
+            "messageData": {
+                "typeMessage": "textMessage",
+                "textMessageData": {"textMessage": "seene mein dard"},
             },
-        )
+        },
+    )
 
     response = client.get("/api/cases")
     assert response.status_code == 200
@@ -50,7 +52,7 @@ def test_override_returns_404_for_unknown_case(client: TestClient) -> None:
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_override_upgrade_logs_audit_and_resumes(
     mock_classify,
     mock_send,

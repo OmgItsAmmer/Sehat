@@ -1,4 +1,4 @@
-"""Phase 4 unit tests: LangGraph triage graph (classify mocked — no live Gemini)."""
+"""Phase 4 unit tests: LangGraph triage graph (classify mocked — no live OpenAI)."""
 
 from __future__ import annotations
 
@@ -31,8 +31,8 @@ def _invoke_chest_pain() -> dict:
 
 @patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
 def test_p1_keyword_override_end_to_end(_mock_slack) -> None:
-    """P1 keywords bypass Gemini and traverse emergency → notify → confirm."""
-    with patch("app.agent.nodes.classify_message_with_gemini") as mock_gemini:
+    """P1 keywords bypass LLM and traverse emergency → notify → confirm."""
+    with patch("app.agent.nodes.classify_message_with_openai") as mock_gemini:
         result = _invoke_chest_pain()
 
     mock_gemini.assert_not_called()
@@ -42,7 +42,7 @@ def test_p1_keyword_override_end_to_end(_mock_slack) -> None:
     assert "1122" in result["reply"]
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_oos_path_skips_gemini_slots(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="OOS",
@@ -68,7 +68,7 @@ def test_oos_path_skips_gemini_slots(mock_classify) -> None:
     assert result.get("slack_notified") is not True
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_p3_with_slots_routes_to_general(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",
@@ -98,7 +98,7 @@ def test_p3_with_slots_routes_to_general(mock_classify) -> None:
     assert result["reply"]
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",
@@ -125,7 +125,7 @@ def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     assert result.get("routed_to") == "general"
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_low_confidence_routes_to_human_review(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",

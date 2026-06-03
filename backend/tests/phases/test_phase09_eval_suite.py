@@ -1,4 +1,4 @@
-"""Phase 9 — classification eval fixtures and report (no live Gemini in CI)."""
+"""Phase 9 — classification eval fixtures and report (no live OpenAI in CI)."""
 
 from __future__ import annotations
 
@@ -24,13 +24,13 @@ def test_fixtures_cover_twenty_labelled_messages() -> None:
 
 
 def test_classify_for_eval_p1_keyword_without_gemini() -> None:
-    with patch("app.agent.nodes.classify_message_with_gemini") as mock_gemini:
+    with patch("app.agent.nodes.classify_message_with_openai") as mock_gemini:
         out = classify_for_eval("seene mein dard ho raha hai")
     mock_gemini.assert_not_called()
     assert out["priority"] == "P1"
 
 
-@patch("app.agent.nodes.classify_message_with_gemini")
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_eval_suite_perfect_classifier_scores_100_percent(mock_classify) -> None:
     def _fake_classify(message: str) -> TriageResult:
         for case in TEST_CASES:

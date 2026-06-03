@@ -17,6 +17,9 @@ defaults:
 
 env:
   PYTHON_VERSION: "3.11"
+  # Never bill real keys in CI — tests mock OpenAI/Green API or use P1 keyword paths.
+  OPENAI_API_KEY: ""
+  GEMINI_API_KEY: ""
 
 jobs:
   lint:

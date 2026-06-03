@@ -2,13 +2,22 @@
 
 from __future__ import annotations
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
 
 pytestmark = pytest.mark.system
 
 
-def test_patient_message_intake_flow(client: TestClient, green_api_text_payload: dict) -> None:
+@patch("app.services.pipeline.whatsapp.send_text", return_value=True)
+@patch("app.agent.nodes.slack.send_triage_alert", return_value=True)
+def test_patient_message_intake_flow(
+    _mock_slack,
+    _mock_send,
+    client: TestClient,
+    green_api_text_payload: dict,
+) -> None:
     """Health check → WhatsApp webhook → ack mirrors production smoke test."""
     health = client.get("/health")
     assert health.status_code == 200
