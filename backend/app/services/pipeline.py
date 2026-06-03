@@ -7,8 +7,8 @@ from typing import Any, Literal
 
 from sqlalchemy.orm import Session
 
-from app.agent.graph import graph
-from app.agent.state import TriageState, latest_message
+from app.agent.graph import invoke_graph
+from app.agent.state import TriageState, latest_message, merge_state
 from app.services import memory, whatsapp
 from app.services.persist import persist_incoming_message, persist_outbound_message
 
@@ -79,9 +79,9 @@ async def process_inbound(
 
     slot_patch = apply_pending_slot_answer(state)
     if slot_patch:
-        state.update(slot_patch)  # type: ignore[typeddict-unknown-key]
+        state = merge_state(state, slot_patch)
 
-    result: TriageState = graph.invoke(state)
+    result = invoke_graph(state)
     await memory.save(chat_id, result)
 
     if db is not None:
@@ -135,7 +135,7 @@ async def resume_after_override(
         ).strip()
         state["reply"] = ""
 
-    result: TriageState = graph.invoke(state)
+    result = invoke_graph(state)
     await memory.save(chat_id, result)
 
     reply = (result.get("reply") or "").strip()

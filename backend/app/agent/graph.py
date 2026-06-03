@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from langgraph.graph import END, START, StateGraph
 
 from app.agent import nodes
@@ -125,3 +127,8 @@ def build_graph() -> StateGraph:
 
 # Compiled graph — import as `from app.agent.graph import graph`.
 graph = build_graph().compile()
+
+
+def invoke_graph(state: TriageState) -> TriageState:
+    """Run the compiled graph and return typed triage state."""
+    return cast(TriageState, graph.invoke(state))

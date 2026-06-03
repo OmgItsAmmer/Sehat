@@ -337,13 +337,30 @@ Avg confidence     0.91
 
 **Goal:** A public URL that works, with three scripted demo scenarios ready.
 
-**Deploy:**
+**Deploy on Fly.io (cheapest path):**
+
+Keep Postgres on **Neon** (free tier) and Redis on **Upstash** (free tier). Fly only runs the API container — one shared-cpu machine that auto-stops when idle so you pay almost nothing outside demo hours.
+
 ```bash
-railway login
-railway up
-# set environment variables in Railway dashboard
-# update GREEN_API webhook URL to your Railway domain
+# one-time
+fly auth login
+cd backend && fly launch --no-deploy    # pick nearest region (e.g. sin, bom)
+fly secrets set DATABASE_URL=... REDIS_URL=... GEMINI_API_KEY=...   # see runbook
+make migrate                            # Neon — run from laptop, not on Fly
+fly deploy
+# update GREEN_API webhook URL to https://<your-app>.fly.dev/api/whatsapp/webhook
 ```
+
+Full steps, `fly.toml` cost settings, frontend static deploy, and webhook checklist: [`docs/runbooks/flyio-deploy_runbook.md`](runbooks/flyio-deploy_runbook.md).
+
+**Cost target (~$0/mo for a hackathon demo):**
+
+| Service | Provider | Tier |
+|---------|----------|------|
+| API | Fly.io | 1× `shared-cpu-1x` 256MB, `min_machines_running = 0`, auto-stop |
+| Postgres | Neon | Free — already wired in Phase 2 |
+| Redis | Upstash | Free — `REDIS_URL` from console |
+| Frontend (optional) | Fly.io static app | Second free machine, or run locally against live API |
 
 **Seed three demo scenarios** so any evaluator can test end to end without knowing what to type:
 
@@ -363,13 +380,14 @@ Scenario C — Out of scope
 
 **Pre-demo checklist:**
 ```
-[ ] WhatsApp webhook URL updated to live Railway domain
+[ ] WhatsApp webhook URL updated to live Fly.io domain (https://<app>.fly.dev/...)
 [ ] Slack workspace connected and test alert received
-[ ] Postgres migrations run on Railway
-[ ] Redis provisioned on Railway
+[ ] Postgres migrations run against Neon (make migrate)
+[ ] Upstash Redis provisioned; REDIS_URL set as Fly secret
+[ ] fly secrets set for all keys in .env.example (nothing committed to git)
+[ ] First webhook after idle wakes the machine (~5–15s cold start — send a ping before demo)
 [ ] Three demo scenarios tested end to end on live URL
 [ ] Screen recording taken as backup
-[ ] .env secrets set in Railway dashboard (not committed to git)
 ```
 
 ---

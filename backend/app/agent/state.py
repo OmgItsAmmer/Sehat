@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from typing_extensions import TypedDict
 
@@ -61,6 +61,11 @@ def fresh_state(patient_phone: str) -> TriageState:
         "awaiting_human_review": False,
         "human_review_resolved": False,
     }
+
+
+def merge_state(state: TriageState, patch: dict[str, Any]) -> TriageState:
+    """Merge partial updates (Redis JSON, slot answers) into triage state."""
+    return cast(TriageState, {**state, **patch})
 
 
 def latest_message(state: TriageState) -> str:

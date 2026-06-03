@@ -123,7 +123,7 @@ def route_node(state: TriageState) -> dict:
 def notify_human_node(state: TriageState) -> dict:
     """Alert staff via Slack webhook (P1 / P2 / escalated)."""
     phone = state.get("patient_phone", "unknown")
-    priority = state.get("priority", "?")
+    priority = state.get("priority") or "?"
     routed = state.get("routed_to")
     preview = latest_message(state)
     escalated = bool(state.get("escalated"))

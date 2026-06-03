@@ -8,7 +8,7 @@ from typing import Any
 
 import redis.asyncio as aioredis
 
-from app.agent.state import TriageState, fresh_state
+from app.agent.state import TriageState, fresh_state, merge_state
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -36,8 +36,7 @@ def dumps(state: TriageState) -> str:
 
 def loads(phone: str, raw: str) -> TriageState:
     data: dict[str, Any] = json.loads(raw)
-    merged = fresh_state(phone)
-    merged.update(data)
+    merged = merge_state(fresh_state(phone), data)
     merged["patient_phone"] = phone
     return merged
 
@@ -84,7 +83,7 @@ async def load(phone: str) -> TriageState:
     if client is not None:
         try:
             raw = await client.get(key)
-            if raw:
+            if isinstance(raw, str):
                 return loads(phone, raw)
             return fresh_state(phone)
         except Exception:
