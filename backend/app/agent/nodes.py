@@ -30,6 +30,7 @@ def _matches_p1_keywords(text: str) -> bool:
 # Classification
 # ---------------------------------------------------------------------------
 
+
 def classify_node(state: TriageState) -> dict:
     """Run OpenAI triage on the latest patient message."""
     message = latest_message(state)
@@ -61,6 +62,7 @@ def classify_node(state: TriageState) -> dict:
 # ---------------------------------------------------------------------------
 # Exit / terminal intent nodes  (set reply_intent, NOT reply)
 # ---------------------------------------------------------------------------
+
 
 def emergency_exit_node(state: TriageState) -> dict:
     """P1 fast path — skip slot-filling, advise emergency services."""
@@ -206,6 +208,7 @@ def confirm_user_node(state: TriageState) -> dict:
 # ---------------------------------------------------------------------------
 # Natural reply composer — always the last node before END
 # ---------------------------------------------------------------------------
+
 
 def compose_reply_node(state: TriageState) -> dict:
     """

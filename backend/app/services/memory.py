@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 
 import redis.asyncio as aioredis
 
@@ -102,10 +102,10 @@ async def load(phone: str) -> TriageState:
 
 async def save(phone: str, state: TriageState) -> None:
     """Persist state after a graph pass (24h TTL when using Redis)."""
-    state = dict(state)
-    state["last_activity_at"] = datetime.now(UTC).isoformat()
+    stored = cast(TriageState, dict(state))
+    stored["last_activity_at"] = datetime.now(UTC).isoformat()
     key = _session_key(phone)
-    payload = dumps(state)
+    payload = dumps(stored)
     client = await get_redis()
 
     if client is not None:

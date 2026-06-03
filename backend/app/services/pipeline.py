@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from sqlalchemy.orm import Session
 
@@ -81,13 +81,12 @@ async def _process_inbound(
     """
     load, save = _store_for_channel(channel)
     deliver_whatsapp = channel == WHATSAPP
-    persist_db = db is not None
     log_label = "phone" if channel == WHATSAPP else "session"
 
     if body.strip().lower() in _RESET_KEYWORDS:
         state = fresh_state(session_id)
         await save(session_id, state)
-        if persist_db:
+        if db is not None:
             persist_incoming_message(
                 db=db, patient_phone=session_id, body=body, raw_payload=raw_payload
             )
@@ -106,7 +105,7 @@ async def _process_inbound(
     if state.get("awaiting_human_review"):
         state["reply"] = HOLD_REPLY
         await save(session_id, state)
-        if persist_db:
+        if db is not None:
             persist_incoming_message(
                 db=db,
                 patient_phone=session_id,
@@ -123,6 +122,7 @@ async def _process_inbound(
         and not state.get("pending_slot")
         and not state.get("awaiting_human_review")
     ):
+        clearable = cast(dict[str, Any], state)
         for _field in (
             "priority",
             "confidence",
@@ -135,7 +135,7 @@ async def _process_inbound(
             "slack_notified",
             "human_review_resolved",
         ):
-            state.pop(_field, None)
+            clearable.pop(_field, None)
 
     slot_patch = apply_pending_slot_answer(state)
     if slot_patch:
@@ -152,7 +152,7 @@ async def _process_inbound(
     result = invoke_graph(state)
     await save(session_id, result)
 
-    if persist_db:
+    if db is not None:
         persist_incoming_message(
             db=db,
             patient_phone=session_id,

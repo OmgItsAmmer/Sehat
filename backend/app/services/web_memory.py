@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime
+from typing import cast
 
 from app.agent.state import TriageState, fresh_state
 from app.services.memory import SESSION_TTL_SECONDS, dumps, get_redis, loads
@@ -45,10 +46,10 @@ async def load(session_id: str) -> TriageState:
 
 
 async def save(session_id: str, state: TriageState) -> None:
-    state = dict(state)
-    state["last_activity_at"] = datetime.now(UTC).isoformat()
+    stored = cast(TriageState, dict(state))
+    stored["last_activity_at"] = datetime.now(UTC).isoformat()
     key = _session_key(session_id)
-    payload = dumps(state)
+    payload = dumps(stored)
     client = await get_redis()
 
     if client is not None:

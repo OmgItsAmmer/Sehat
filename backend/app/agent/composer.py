@@ -49,13 +49,10 @@ def compose_reply(
         _model = model or settings.openai_model or "gpt-4o-mini"
 
         slots_text = (
-            "\n".join(f"  {k}: {v}" for k, v in (filled_slots or {}).items())
-            or "  (none yet)"
+            "\n".join(f"  {k}: {v}" for k, v in (filled_slots or {}).items()) or "  (none yet)"
         )
         user_content = (
-            f"LAST_MESSAGE:\n{last_message}\n\n"
-            f"FILLED_SLOTS:\n{slots_text}\n\n"
-            f"INTENT:\n{intent}"
+            f"LAST_MESSAGE:\n{last_message}\n\nFILLED_SLOTS:\n{slots_text}\n\nINTENT:\n{intent}"
         )
 
         resp = client.chat.completions.create(

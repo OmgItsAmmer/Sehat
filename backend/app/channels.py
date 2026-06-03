@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-WHATSAPP = "whatsapp"
-WEB = "web"
+from typing import Literal
+
+WHATSAPP: Literal["whatsapp"] = "whatsapp"
+WEB: Literal["web"] = "web"
 
 WEB_SESSION_ID_PREFIX = "ws_"
