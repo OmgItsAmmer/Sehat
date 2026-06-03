@@ -1,0 +1,122 @@
+# CI: lint and test (unit → integration → system) on every push and PR.
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: backend
+
+env:
+  PYTHON_VERSION: "3.11"
+  # Never bill real keys in CI — tests mock OpenAI/Green API or use P1 keyword paths.
+  OPENAI_API_KEY: ""
+  GEMINI_API_KEY: ""
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Ruff (lint)
+        run: ruff check app tests
+
+      - name: Ruff (format)
+        run: ruff format --check app tests
+
+      - name: Mypy
+        run: mypy app
+
+  unit-tests:
+    name: Unit tests
+    needs: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run unit tests
+        run: pytest tests/unit tests/phases -m "unit" --cov=app --cov-report=term-missing -v
+
+  integration-tests:
+    name: Integration tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run integration tests
+        run: pytest tests/integration tests/phases -m "integration" -v
+
+  system-tests:
+    name: System tests
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Run system tests
+        run: pytest tests/system -m system -v
+
+  ci-success:
+    name: CI gate
+    needs: [lint, unit-tests, integration-tests, system-tests]
+    runs-on: ubuntu-latest
+    # Workflow default working-directory is backend; this job has no checkout step.
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    if: >-
+      ${{ always() && !cancelled()
+      && needs.lint.result == 'success'
+      && needs.unit-tests.result == 'success'
+      && needs.integration-tests.result == 'success'
+      && needs.system-tests.result == 'success' }}
+    steps:
+      - name: All CI jobs passed
+        run: echo "lint, unit (incl. phase 1-9), integration, and system jobs succeeded"

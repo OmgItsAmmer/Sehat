@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-lowest": "#ffffff",
+                    "inverse-surface": "#213145",
+                    "surface-container-low": "#eff4ff",
+                    "secondary-fixed": "#ffdad6",
+                    "primary": "#005454",
+                    "secondary-container": "#e02928",
+                    "on-secondary-fixed": "#410002",
+                    "on-primary-fixed-variant": "#004f50",
+                    "inverse-on-surface": "#eaf1ff",
+                    "on-tertiary": "#ffffff",
+                    "on-secondary-fixed-variant": "#93000b",
+                    "tertiary-fixed-dim": "#ffb95f",
+                    "tertiary-fixed": "#ffddb8",
+                    "primary-fixed-dim": "#84d4d3",
+                    "on-surface": "#0b1c30",
+                    "on-secondary-container": "#fffbff",
+                    "surface-container-highest": "#d3e4fe",
+                    "primary-fixed": "#a0f0f0",
+                    "surface-container": "#e5eeff",
+                    "background": "#f8f9ff",
+                    "inverse-primary": "#84d4d3",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-tertiary-container": "#ffd9ae",
+                    "tertiary": "#6a4200",
+                    "surface-tint": "#016a6a",
+                    "secondary-fixed-dim": "#ffb4ab",
+                    "on-primary-fixed": "#002020",
+                    "on-primary": "#ffffff",
+                    "surface-variant": "#d3e4fe",
+                    "on-background": "#0b1c30",
+                    "surface-dim": "#cbdbf5",
+                    "on-surface-variant": "#3e4948",
+                    "surface-container-high": "#dce9ff",
+                    "surface-bright": "#f8f9ff",
+                    "outline": "#6e7979",
+                    "primary-container": "#0d6e6e",
+                    "on-tertiary-fixed-variant": "#653e00",
+                    "on-primary-container": "#9dedec",
+                    "on-error-container": "#93000a",
+                    "tertiary-container": "#8b5700",
+                    "outline-variant": "#bec9c8",
+                    "surface": "#f8f9ff",
+                    "secondary": "#bb0112",
+                    "on-tertiary-fixed": "#2a1700",
+                    "on-secondary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "container-padding": "24px",
+                    "touch-target-min": "48px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "mono-clinical": ["Inter"],
+                    "title-lg": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "headline-md": ["Plus Jakarta Sans"],
+                    "label-md": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "mono-clinical": ["13px", {"lineHeight": "18px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "title-lg": ["18px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "fontWeight": "600"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .p1-pulse {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 12px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        .zebra-list div:nth-child(even) {
+            background-color: #f8f9ff;
+        }
+        .safe-bottom {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-surface dark:bg-on-background w-full top-0 sticky z-40 border-b border-outline-variant dark:border-outline">
+<div class="flex justify-between items-center px-margin-mobile h-touch-target-min w-full">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed overflow-hidden flex items-center justify-center">
+<img alt="Fatima Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a female doctor of Middle Eastern descent, wearing a clean white clinical coat and a stethoscope around her neck. The lighting is soft and professional, set against a blurred medical office background with hints of teal and white. The aesthetic is high-end medical SaaS, conveying competence, calm, and clinical authority." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjecDLBbbdR-kz4OCEG877uyUaTq_V4LRmONywczZ3BJNl_tzo2Dub_U7CydToUHqSCw4-6VVf1FPtoY9EhKLa6TDa8g8qpq6vI3iKe5IrN1ts_U2EYIFJIpTv4nwAhAHIsjZEdBig284Za59_6-R05kM-zZSpncobgFshJs1PdHuBIBYB7ytmVQ7Ku0IdzxRY70wXphqOKGyjomo1ilCOrsueI3efvJd18urjOQLTHoV7QvCyqpp3pxpNmucc04vwp6OH09_U0gCY"/>
+</div>
+<span class="text-title-lg font-headline-md text-primary dark:text-primary-fixed">Clinic Central</span>
+</div>
+<div class="flex items-center">
+<button class="w-touch-target-min h-touch-target-min flex items-center justify-center text-primary transition-colors duration-200 ease-in-out hover:bg-surface-container-low">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</div>
+</header>
+<main class="flex-1 pb-[100px]">
+<!-- Greeting Section -->
+<section class="px-margin-mobile pt-6 pb-4">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Good morning, Fatima</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Tuesday, October 24, 2023</p>
+</section>
+<!-- P1 Emergency Sticky Section -->
+<section class="px-margin-mobile mb-6">
+<div class="bg-surface-container-lowest border-2 border-error p-4 rounded-lg p1-pulse flex items-start gap-4">
+<div class="mt-1">
+<span class="material-symbols-outlined text-error animate-pulse" style="font-variation-settings: 'FILL' 1;">error</span>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<h2 class="font-title-lg text-title-lg text-error">CRITICAL ALERT (P1)</h2>
+<span class="bg-error text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">Stat</span>
+</div>
+<p class="font-body-md text-body-md font-bold text-on-surface mt-1">Jameson, Robert — Room 402B</p>
+<p class="font-mono-clinical text-mono-clinical text-on-surface-variant mt-1">Suspected Sepsis • BP 88/54 • HR 122</p>
+<button class="mt-4 w-full bg-secondary h-touch-target-min text-white font-label-md rounded flex items-center justify-center gap-2 active:scale-95 transition-transform">
+<span class="material-symbols-outlined">bolt</span>
+                        VIEW CRITICAL DETAILS
+                    </button>
+</div>
+</div>
+</section>
+<!-- Case Lists -->
+<div class="px-margin-mobile space-y-8">
+<!-- P2 Urgent Section -->
+<section>
+<div class="flex items-center gap-2 mb-3">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim"></div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">P2 Urgent • 3 Cases</h3>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden divide-y divide-outline-variant zebra-list">
+<div class="p-4 flex justify-between items-center h-touch-target-min min-h-[72px]">
+<div>
+<p class="font-body-md font-semibold text-on-surface">Chen, Wei</p>
+<p class="font-mono-clinical text-on-surface-variant">Post-Op Monitor • R304</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="p-4 flex justify-between items-center h-touch-target-min min-h-[72px]">
+<div>
+<p class="font-body-md font-semibold text-on-surface">Gomez, Elena</p>
+<p class="font-mono-clinical text-on-surface-variant">Lab Results Pending • R211</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="p-4 flex justify-between items-center h-touch-target-min min-h-[72px]">
+<div>
+<p class="font-body-md font-semibold text-on-surface">Thompson, Sarah</p>
+<p class="font-mono-clinical text-on-surface-variant">Imaging Review • R108</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- P3 Routine Section -->
+<section>
+<div class="flex items-center gap-2 mb-3">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">P3 Routine • 2 Cases</h3>
+</div>
+<div class="bg-surface-container border border-outline-variant rounded-lg overflow-hidden divide-y divide-outline-variant zebra-list">
+<div class="p-4 flex justify-between items-center h-touch-target-min min-h-[72px]">
+<div>
+<p class="font-body-md font-semibold text-on-surface">O'Connor, Liam</p>
+<p class="font-mono-clinical text-on-surface-variant">Discharge Papers • R502</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+<div class="p-4 flex justify-between items-center h-touch-target-min min-h-[72px]">
+<div>
+<p class="font-body-md font-semibold text-on-surface">Miller, David</p>
+<p class="font-mono-clinical text-on-surface-variant">Wound Check • R415</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Out of Service / Other -->
+<section class="opacity-60">
+<div class="flex items-center gap-2 mb-3">
+<div class="w-2 h-2 rounded-full border border-outline"></div>
+<h3 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest">Out of Service</h3>
+</div>
+<div class="bg-surface-container-low border border-outline-variant rounded-lg p-4 flex justify-between items-center h-touch-target-min">
+<div>
+<p class="font-body-md font-semibold text-on-surface-variant">Facility Maintenance</p>
+<p class="font-mono-clinical text-on-surface-variant">Radiology Wing B</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">block</span>
+</div>
+</section>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 h-[80px] bg-surface dark:bg-on-background border-t border-outline-variant dark:border-outline shadow-sm flex justify-around items-center px-gutter pb-safe">
+<div class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container dark:bg-primary-fixed dark:text-on-primary-fixed rounded-full px-5 py-1 transition-transform duration-100 active:scale-95">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">assignment_late</span>
+<span class="font-label-md text-label-md">Cases</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-100 active:scale-95">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-transform duration-100 active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</div>
+</nav>
+<!-- FAB Overlay (Contextual for Case Management) -->
+<div class="fixed bottom-24 right-4">
+<button class="w-[56px] h-[56px] rounded-xl bg-primary text-white shadow-lg flex items-center justify-center active:scale-90 transition-transform">
+<span class="material-symbols-outlined text-[28px]">add</span>
+</button>
+</div>
+</body></html>
