@@ -30,7 +30,10 @@ async def load(session_id: str) -> TriageState:
                 return loads(session_id, raw)
             return fresh_state(session_id)
         except Exception:
-            logger.warning("Redis load failed for web session %s — using in-memory fallback", session_id)
+            logger.warning(
+                "Redis load failed for web session %s — using in-memory fallback",
+                session_id,
+            )
             from app.services.memory import _invalidate_redis
 
             await _invalidate_redis()
@@ -53,7 +56,10 @@ async def save(session_id: str, state: TriageState) -> None:
             await client.set(key, payload, ex=SESSION_TTL_SECONDS)
             return
         except Exception:
-            logger.warning("Redis save failed for web session %s — using in-memory fallback", session_id)
+            logger.warning(
+                "Redis save failed for web session %s — using in-memory fallback",
+                session_id,
+            )
             from app.services.memory import _invalidate_redis
 
             await _invalidate_redis()

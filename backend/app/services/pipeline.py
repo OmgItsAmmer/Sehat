@@ -75,7 +75,10 @@ async def _process_inbound(
     db: Session | None = None,
     raw_payload: dict[str, Any] | None = None,
 ) -> TriageState:
-    """Load session → run graph → save. WhatsApp also persists to Postgres and sends Green API replies."""
+    """Load session → run graph → save.
+
+    WhatsApp also persists to Postgres and sends Green API replies.
+    """
     load, save = _store_for_channel(channel)
     deliver_whatsapp = channel == WHATSAPP
     persist_db = db is not None
@@ -115,7 +118,11 @@ async def _process_inbound(
             whatsapp.send_text(chat_id=session_id, message=HOLD_REPLY)
         return state
 
-    if state.get("slots_complete") and not state.get("pending_slot") and not state.get("awaiting_human_review"):
+    if (
+        state.get("slots_complete")
+        and not state.get("pending_slot")
+        and not state.get("awaiting_human_review")
+    ):
         for _field in (
             "priority",
             "confidence",
@@ -187,7 +194,13 @@ async def process_web_inbound(
     db: Session | None = None,
 ) -> TriageState:
     """Web chat channel — separate Redis store; persists to Postgres when db is available."""
-    return await _process_inbound(session_id=session_id, body=body, channel=WEB, db=db, raw_payload=None)
+    return await _process_inbound(
+        session_id=session_id,
+        body=body,
+        channel=WEB,
+        db=db,
+        raw_payload=None,
+    )
 
 
 # Back-compat for existing tests and imports

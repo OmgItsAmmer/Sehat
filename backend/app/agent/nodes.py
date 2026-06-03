@@ -191,7 +191,8 @@ def confirm_user_node(state: TriageState) -> dict:
             "reply_intent": (
                 f"CONFIRMED: the patient's case has been logged as {priority} priority "
                 f"and routed to {routed}. "
-                "Warmly confirm receipt and say they will hear back shortly to confirm the appointment."
+                "Warmly confirm receipt and say they will hear back shortly "
+                "to confirm the appointment."
             ),
         }
     return {
