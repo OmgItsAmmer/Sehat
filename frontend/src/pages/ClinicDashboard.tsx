@@ -19,7 +19,10 @@ export function ClinicDashboard() {
 
   useEffect(() => {
     if (import.meta.env.DEV) {
-      console.info("[Sehat] API base:", import.meta.env.VITE_API_URL || "http://127.0.0.1:8000 (default)");
+      console.info(
+        "[Sehat] API:",
+        import.meta.env.VITE_API_URL?.trim() || "Vite proxy → http://127.0.0.1:8000",
+      );
     }
   }, []);
   const [params, setParams] = useSearchParams();
@@ -128,7 +131,7 @@ export function ClinicDashboard() {
             disabled={refreshing}
             onClick={() => void handleRefresh()}
             className="flex h-touch-target-min items-center gap-1 rounded-full px-3 py-2 text-on-surface-variant transition-colors hover:bg-surface-container-low disabled:opacity-50"
-            title="Refresh from API"
+            title="Reload cases from API"
           >
             <Icon name="refresh" className={refreshing ? "animate-spin" : ""} />
             <span className="hidden font-label-md text-label-md sm:inline">Refresh</span>
@@ -178,7 +181,8 @@ export function ClinicDashboard() {
             )}
             {!loading && filtered.length === 0 && (
               <p className="px-3 text-body-md text-on-surface-variant">
-                No cases in queue. Intake arrives via WhatsApp webhook.
+                No patients in Redis or Postgres yet. Send a WhatsApp message or check DATABASE_URL
+                and run <code className="font-mono-clinical">make migrate</code>.
               </p>
             )}
             {filtered.map((c) => (
@@ -280,7 +284,7 @@ function QueueCard({
           {p === "P2" && <span className="h-2 w-2 rounded-full bg-[#F59E0B]" />}
           {p !== "P1" && p !== "P2" && <span className="h-2 w-2 rounded-full bg-outline" />}
           <span className={`font-label-md text-label-md font-bold uppercase ${priorityBadgeClasses(p)}`}>
-            {p ?? "PENDING"}
+            {p ?? (c.source === "database" ? "DB" : "PENDING")}
           </span>
         </div>
         <span className={`font-mono-clinical text-mono-clinical ${p === "P1" ? "text-error" : "text-on-surface-variant"}`}>
@@ -461,9 +465,10 @@ function EmptyMain({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <Icon name="clinical_notes" className="mb-4 text-5xl text-primary-container" />
-      <h2 className="font-headline-md text-headline-md text-on-surface">No active cases</h2>
+      <h2 className="font-headline-md text-headline-md text-on-surface">No patients found</h2>
       <p className="mt-2 max-w-sm font-body-md text-body-md text-on-surface-variant">
-        Cases appear when patients message via WhatsApp webhook.
+        The queue loads from Postgres (saved messages) and Redis (live triage). Send a WhatsApp
+        message or confirm DATABASE_URL is set and migrations have run.
       </p>
       <button
         type="button"
@@ -471,7 +476,7 @@ function EmptyMain({ onRefresh }: { onRefresh: () => void }) {
         className="mt-6 flex items-center gap-2 rounded-xl bg-primary-container px-6 py-3 font-label-md text-on-primary-container"
       >
         <Icon name="refresh" />
-        Refresh from API
+        Reload cases
       </button>
     </div>
   );

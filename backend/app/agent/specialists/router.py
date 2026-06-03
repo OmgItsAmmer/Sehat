@@ -14,9 +14,7 @@ def pick_specialist(state: TriageState) -> str:
     text = " ".join(state.get("messages") or []).lower()
     priority = state.get("priority")
 
-    if priority == "P1" or any(
-        k in text for k in ("seene", "chest", "dil", "heart", "cardiac")
-    ):
+    if priority == "P1" or any(k in text for k in ("seene", "chest", "dil", "heart", "cardiac")):
         return "cardiology"
     if any(k in text for k in ("bach", "bachay", "child", "infant", "baby", "pediatric")):
         return "pediatrics"

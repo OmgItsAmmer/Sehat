@@ -20,8 +20,10 @@ class ChatMessageIn(BaseModel):
 
 
 @router.get("/cases")
-async def list_cases() -> dict[str, Any]:
-    return {"cases": await dashboard.list_cases()}
+async def list_cases(
+    db: Annotated[Session | None, Depends(get_db)],
+) -> dict[str, Any]:
+    return {"cases": await dashboard.list_cases(db=db)}
 
 
 @router.get("/cases/{phone:path}")
@@ -29,13 +31,10 @@ async def get_case(
     phone: str,
     db: Annotated[Session | None, Depends(get_db)],
 ) -> dict[str, Any]:
-    case = await dashboard.get_case(phone)
+    case = await dashboard.get_case(phone, db=db)
     if case is None:
         raise HTTPException(status_code=404, detail="Case not found")
-    if db is not None:
-        case["db_messages"] = dashboard.list_db_messages(db=db, phone=phone)
-    else:
-        case["db_messages"] = []
+    case.setdefault("db_messages", [])
     return case
 
 
@@ -43,15 +42,14 @@ async def get_case(
 async def analytics(
     db: Annotated[Session | None, Depends(get_db)],
 ) -> dict[str, Any]:
-    summary = await dashboard.analytics_summary()
-    if db is not None:
-        summary["database"] = dashboard.db_patient_stats(db)
-    return summary
+    return await dashboard.analytics_summary(db=db)
 
 
 @router.get("/alerts/recent")
-async def recent_alerts() -> dict[str, Any]:
-    cases = await dashboard.list_cases()
+async def recent_alerts(
+    db: Annotated[Session | None, Depends(get_db)],
+) -> dict[str, Any]:
+    cases = await dashboard.list_cases(db=db)
     alerts = [c for c in cases if c.get("priority") in ("P1", "P2") or c.get("escalated")]
     return {"alerts": alerts[:20]}
 

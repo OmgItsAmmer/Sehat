@@ -19,9 +19,7 @@ OverrideAction = Literal["agree", "upgrade", "downgrade"]
 _UPGRADE: dict[str, str] = {"OOS": "P3", "P3": "P2", "P2": "P1", "P1": "P1"}
 _DOWNGRADE: dict[str, str] = {"P1": "P2", "P2": "P3", "P3": "OOS", "OOS": "OOS"}
 
-HOLD_REPLY = (
-    "Your case is with our reception team. We will message you again shortly."
-)
+HOLD_REPLY = "Your case is with our reception team. We will message you again shortly."
 
 
 def apply_pending_slot_answer(state: TriageState) -> dict[str, Any]:
@@ -133,8 +131,7 @@ async def resume_after_override(
 
     if action in ("upgrade", "downgrade") and corrected != original:
         state["reasoning"] = (
-            f"{state.get('reasoning') or ''} "
-            f"[Receptionist {action}: {original} → {corrected}]"
+            f"{state.get('reasoning') or ''} [Receptionist {action}: {original} → {corrected}]"
         ).strip()
         state["reply"] = ""
 

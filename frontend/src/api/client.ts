@@ -6,14 +6,15 @@ import type {
   OverrideResponse,
 } from "./types";
 
-/** Backend origin — empty only when you set VITE_API_URL="" to force the Vite proxy. */
+/**
+ * API base URL.
+ * - Dev default: "" → same-origin + Vite proxy (no CORS).
+ * - Set VITE_API_URL=http://127.0.0.1:8000 only if you open the app at 127.0.0.1:5173.
+ */
 function resolveApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL;
   if (fromEnv !== undefined && fromEnv !== "") {
     return fromEnv.replace(/\/$/, "");
-  }
-  if (import.meta.env.DEV) {
-    return "http://127.0.0.1:8000";
   }
   return "";
 }
@@ -34,8 +35,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  /** Resolved base URL (for debugging connection issues in the console). */
-  baseUrl: API_BASE,
+  baseUrl: API_BASE || "(vite proxy → :8000)",
 
   health: () => request<{ status: string }>("/health"),
 

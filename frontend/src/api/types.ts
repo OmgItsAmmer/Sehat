@@ -17,6 +17,8 @@ export interface CaseSummary {
   pending_slot: string | null;
   reply: string;
   awaiting_human_review?: boolean;
+  /** session = live Redis triage; database = Postgres only; both = merged */
+  source?: "session" | "database" | "both";
 }
 
 export interface OverrideResponse {
