@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Awaitable, Callable
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 from sqlalchemy.orm import Session
 
@@ -13,7 +13,11 @@ from app.agent.state import TriageState, fresh_state, latest_message, merge_stat
 from app.channels import WEB, WHATSAPP
 from app.services import memory, web_memory, whatsapp
 from app.services.clinic_info import build_clinic_context
-from app.services.persist import persist_incoming_message, persist_intake_state, persist_outbound_message
+from app.services.persist import (
+    persist_incoming_message,
+    persist_intake_state,
+    persist_outbound_message,
+)
 from app.services.scheduling import parse_appointment_consent
 
 logger = logging.getLogger(__name__)
@@ -166,10 +170,7 @@ async def _process_inbound(
     if consent_patch:
         state = merge_state(state, consent_patch)
 
-    skip_clinic_ctx = bool(
-        slot_patch
-        and "contact_phone" in (slot_patch.get("slots") or {})
-    )
+    skip_clinic_ctx = bool(slot_patch and "contact_phone" in (slot_patch.get("slots") or {}))
     if not skip_clinic_ctx:
         contact = (state.get("slots") or {}).get("contact_phone")
         clinic_ctx = build_clinic_context(

@@ -5,9 +5,6 @@ from __future__ import annotations
 from datetime import date
 
 import pytest
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker
-
 from app.database.base import Base
 from app.models.appointment import Appointment
 from app.models.patient import Patient
@@ -20,6 +17,8 @@ from app.services.scheduling import (
     parse_preferred_day,
     slots_taken_count,
 )
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 pytestmark = pytest.mark.unit
 

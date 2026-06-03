@@ -128,19 +128,20 @@ def build_clinic_context(
     wants_lookup = is_queue_status_query(message)
     if wants_lookup:
         phone = extract_phone_from_text(message) or (
-            normalize_phone(contact_phone_from_slots)
-            if contact_phone_from_slots
-            else None
+            normalize_phone(contact_phone_from_slots) if contact_phone_from_slots else None
         )
         guest_m = re.search(r"guest[_\s-]?([a-z0-9]{4,8})", message, re.I)
         guest_code = guest_m.group(1).upper() if guest_m else None
         if db is not None and (phone or guest_code):
             status = _safe_lookup_queue(db, contact_phone=phone, guest_code=guest_code)
             if status:
+                contact = status.get("contact_phone") or (
+                    "guest code " + status.get("guest_code", "")
+                )
                 parts.append(
                     f"APPOINTMENT_LOOKUP: {status['doctor_label']} on "
                     f"{status['date']} at {status['time']}. "
-                    f"(contact: {status.get('contact_phone') or 'guest code ' + status.get('guest_code', '')})"
+                    f"(contact: {contact})"
                 )
             else:
                 parts.append(

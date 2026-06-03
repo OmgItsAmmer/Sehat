@@ -362,7 +362,8 @@ def confirm_user_node(state: TriageState) -> dict:
     if state.get("intake_confirmed") and priority in ("P2", "P3"):
         return {
             "reply_intent": (
-                "ADDENDUM: intake is already complete (symptom, duration, preferred day in FILLED_SLOTS). "
+                "ADDENDUM: intake is already complete "
+                "(symptom, duration, preferred day in FILLED_SLOTS). "
                 "Acknowledge the patient's latest message (e.g. preferred day or time). "
                 "Say reception will confirm the appointment. "
                 "Do NOT ask for more intake fields. Do NOT mention billing or admin desk."

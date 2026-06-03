@@ -53,8 +53,7 @@ def _ensure_chunk_cache() -> list[tuple[str, str, str]]:
     if _chunk_cache is None:
         md = _load_kb_markdown()
         _chunk_cache = [
-            (key, body, _keywords_from_content(body))
-            for key, body in _split_kb_into_chunks(md)
+            (key, body, _keywords_from_content(body)) for key, body in _split_kb_into_chunks(md)
         ]
     return _chunk_cache
 
@@ -172,9 +171,7 @@ def seed_kb(db: Session) -> int:
         if use_vector and settings.openai_api_key:
             emb = embed_text(content)
             db.execute(
-                text(
-                    "UPDATE clinic_chunks SET embedding = CAST(:vec AS vector) WHERE id = :id"
-                ),
+                text("UPDATE clinic_chunks SET embedding = CAST(:vec AS vector) WHERE id = :id"),
                 {"vec": _embedding_literal(emb), "id": chunk_id},
             )
         count += 1

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from app.services.clinic_info import (
     build_clinic_context,
     is_bare_phone_message,

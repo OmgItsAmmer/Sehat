@@ -9,7 +9,6 @@ import uuid
 from datetime import date, datetime, time, timedelta
 
 from dateutil import parser as date_parser
-from dateutil.relativedelta import relativedelta
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -118,7 +117,9 @@ def parse_preferred_day(text: str, *, today: date | None = None) -> date | None:
         parsed = date_parser.parse(text, fuzzy=True, default=datetime.combine(ref, time(12, 0)))
         if isinstance(parsed, datetime):
             return parsed.date()
-        return parsed
+        if isinstance(parsed, date):
+            return parsed
+        return None
     except (ValueError, TypeError, OverflowError):
         return None
 
