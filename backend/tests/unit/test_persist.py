@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from app.models.message import Message
 from app.models.patient import Patient
-from app.services.persist import persist_incoming_message
+from app.services.persist import persist_incoming_message, persist_intake_state
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -63,3 +63,31 @@ def test_persist_allows_null_raw_payload(db_session: Session) -> None:
     )
 
     assert msg.raw_payload is None
+
+
+def test_persist_intake_state_stores_slots(db_session: Session) -> None:
+    phone = "79001234567@c.us"
+    persist_incoming_message(
+        db=db_session,
+        patient_phone=phone,
+        body="headache",
+        raw_payload=None,
+    )
+    persist_intake_state(
+        db=db_session,
+        patient_phone=phone,
+        state={
+            "slots": {"chief_complaint": "headache", "symptom_duration": "2 days"},
+            "slots_complete": False,
+            "pending_slot": "preferred_day",
+            "routed_to": "general",
+        },
+    )
+
+    patient = db_session.scalar(select(Patient).where(Patient.phone == phone))
+    assert patient is not None
+    assert patient.intake_slots["chief_complaint"] == "headache"
+    assert patient.intake_slots["symptom_duration"] == "2 days"
+    assert patient.pending_slot == "preferred_day"
+    assert patient.routed_to == "general"
+    assert patient.slots_complete is False

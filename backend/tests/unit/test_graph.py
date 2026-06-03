@@ -135,7 +135,7 @@ def test_max_clarification_rounds_does_not_recursion_loop(_mock_slack, _mock_com
             "patient_phone": "+923001234567",
             "priority": "P3",
             "confidence": 0.88,
-            "clarification_rounds": 2,
+            "clarification_rounds": 10,
             "slots": {},
             "slots_complete": False,
             "routed_to": "general",

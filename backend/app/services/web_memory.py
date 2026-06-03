@@ -35,8 +35,9 @@ async def load(session_id: str) -> TriageState:
                 "Redis load failed for web session %s — using in-memory fallback",
                 session_id,
             )
-            from app.services.memory import _invalidate_redis
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     raw = _FALLBACK.get(key)
@@ -61,8 +62,9 @@ async def save(session_id: str, state: TriageState) -> None:
                 "Redis save failed for web session %s — using in-memory fallback",
                 session_id,
             )
-            from app.services.memory import _invalidate_redis
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     _FALLBACK[key] = payload
@@ -100,8 +102,9 @@ async def list_sessions() -> list[str]:
             return sorted(sessions)
         except Exception:
             logger.warning("Redis list_sessions failed — using in-memory fallback")
-            from app.services.memory import _invalidate_redis
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     for key in _FALLBACK:

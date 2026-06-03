@@ -18,12 +18,34 @@ from app.services import slack
 
 logger = logging.getLogger(__name__)
 
-MAX_CLARIFICATION_ROUNDS = 2
+MAX_CLARIFICATION_ROUNDS = 10
 
 
 def _matches_p1_keywords(text: str) -> bool:
     lowered = text.lower()
     return any(kw in lowered for kw in P1_KEYWORDS)
+
+
+def _is_pure_greeting(text: str) -> bool:
+    t = text.strip().lower().rstrip("!?.")
+    if not t:
+        return False
+    greetings = (
+        "hello",
+        "hi",
+        "hey",
+        "salam",
+        "aoa",
+        "assalam o alaikum",
+        "assalamu alaikum",
+        "asalam o alaikum",
+        "assalamualaikum",
+    )
+    return t in greetings or t.startswith("assalam") or t.startswith("salam")
+
+
+def _intake_already_logged(state: TriageState) -> bool:
+    return bool(state.get("slots_complete") and (state.get("slots") or {}))
 
 
 # ---------------------------------------------------------------------------
@@ -47,6 +69,16 @@ def classify_node(state: TriageState) -> dict:
             "confidence": 1.0,
             "reasoning": "P1 keyword override (hardcoded safety list).",
         }
+
+    if _is_pure_greeting(message):
+        return {
+            "priority": "P3",
+            "confidence": 0.95,
+            "reasoning": "Pure greeting — invite health concern.",
+        }
+
+    if _intake_already_logged(state):
+        return {}
 
     result = classify_message_with_openai(message)
     updates: dict = {
@@ -183,18 +215,32 @@ def await_human_review_node(state: TriageState) -> dict:
 
 def confirm_user_node(state: TriageState) -> dict:
     """Set reply_intent for the happy-path confirmation (P2/P3 fully slotted)."""
-    if state.get("reply_intent"):
+    prior = (state.get("reply_intent") or "").strip()
+    if prior.startswith(("EMERGENCY", "OOS", "ESCALATE", "HOLD")):
+        return {}
+    if prior.startswith(("CONFIRMED", "ADDENDUM")):
         return {}
 
     priority = state.get("priority")
     routed = state.get("routed_to") or "our clinic"
+    if state.get("intake_confirmed") and priority in ("P2", "P3"):
+        return {
+            "reply_intent": (
+                "ADDENDUM: intake is already complete (symptom, duration, preferred day in FILLED_SLOTS). "
+                "Acknowledge the patient's latest message (e.g. preferred day or time). "
+                "Say reception will confirm the appointment. "
+                "Do NOT ask for more intake fields. Do NOT mention billing or admin desk."
+            ),
+        }
     if priority in ("P2", "P3"):
         return {
+            "intake_confirmed": True,
             "reply_intent": (
                 f"CONFIRMED: the patient's case has been logged as {priority} priority "
                 f"and routed to {routed}. "
                 "Warmly confirm receipt and say they will hear back shortly "
-                "to confirm the appointment."
+                "to confirm the appointment. "
+                "Do NOT ask for appointment time or any extra intake fields."
             ),
         }
     return {
@@ -244,4 +290,4 @@ def compose_reply_node(state: TriageState) -> dict:
         intent=intent,
         filled_slots=filled_slots,
     )
-    return {"reply": natural}
+    return {"reply": natural, "reply_intent": ""}

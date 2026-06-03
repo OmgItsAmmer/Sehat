@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { OverrideButtons } from "@/components/dashboard/OverrideButtons";
+import { LoadingSkeleton, LoadingState } from "@/components/dashboard/LoadingState";
 import { Icon } from "@/components/stitch/Icon";
 import { useBackendHealth, useCaseDetail, useCases } from "@/hooks/useCases";
 import {
   complaintLine,
   displayName,
+  formatSlotLabel,
   initials,
   isWebSession,
   patientLabel,
@@ -16,16 +18,18 @@ import type { CaseDetail, CaseSummary, Priority } from "@/api/types";
 import {
   BACKEND_OFFLINE,
   EMPTY_DETAIL,
+  EMPTY_INTAKE_SLOTS,
   EMPTY_QUEUE,
   EMPTY_QUEUE_FILTER,
   LOADING_CASE,
-  LOADING_QUEUE,
+  LOADING_DASHBOARD,
   NO_MESSAGES,
 } from "@/lib/userMessages";
 
 export function ClinicDashboard() {
-  const { cases, loading, error, lastUpdated, refresh: refreshCases } = useCases();
-  const { ok: backendOk } = useBackendHealth();
+  const { cases, error, lastUpdated, refresh: refreshCases, initialLoading: queueInitialLoading } =
+    useCases();
+  const { ok: backendOk, checking: backendChecking } = useBackendHealth();
 
   useEffect(() => {
     if (import.meta.env.DEV) {
@@ -46,7 +50,7 @@ export function ClinicDashboard() {
     return cases[0]?.phone ?? "";
   }, [caseParam, cases]);
 
-  const { detail, loading: detailLoading, error: detailError, refresh: refreshDetail } =
+  const { detail, error: detailError, refresh: refreshDetail, initialLoading: detailInitialLoading } =
     useCaseDetail(selectedPhone || undefined);
 
   const filtered = useMemo(() => {
@@ -60,6 +64,12 @@ export function ClinicDashboard() {
 
   const selected = cases.find((c) => c.phone === selectedPhone);
   const p1 = cases.filter((c) => c.priority === "P1");
+
+  const headerCase = useMemo((): CaseSummary | null => {
+    if (!selected) return null;
+    if (!detail) return selected;
+    return { ...selected, ...detail, slots: detail.slots ?? selected.slots ?? {} };
+  }, [selected, detail]);
 
   useEffect(() => {
     if (caseParam && caseParam !== selectedPhone && selectedPhone) {
@@ -80,6 +90,9 @@ export function ClinicDashboard() {
   function selectCase(phone: string) {
     setParams({ case: phone });
   }
+
+  const showQueueLoader = queueInitialLoading;
+  const showMainLoader = queueInitialLoading;
 
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-background font-body-md text-on-background">
@@ -135,15 +148,31 @@ export function ClinicDashboard() {
             Sehat | صحت
           </span>
           <span
-            className={`h-2 w-2 rounded-full ${backendOk === false ? "bg-error" : backendOk ? "bg-primary-container" : "bg-outline"}`}
-            title={backendOk === false ? "Backend offline" : backendOk ? "Backend connected" : "Checking…"}
+            className={`h-2 w-2 rounded-full ${
+              backendChecking
+                ? "bg-outline animate-pulse"
+                : backendOk === false
+                  ? "bg-error"
+                  : backendOk
+                    ? "bg-primary-container"
+                    : "bg-outline"
+            }`}
+            title={
+              backendChecking
+                ? "Checking server…"
+                : backendOk === false
+                  ? "Backend offline"
+                  : backendOk
+                    ? "Backend connected"
+                    : "Checking…"
+            }
           />
         </div>
         <div className="flex flex-1 justify-center">
           <div className="flex items-center gap-2 rounded-full border border-outline-variant bg-surface-container-low px-4 py-1.5">
             <span className={`h-2 w-2 rounded-full ${p1.length ? "bg-error pulse-red" : "bg-primary-container"}`} />
             <span className="font-label-md text-label-md text-on-surface">
-              {loading ? "…" : `${cases.length} Active Cases`}
+              {showQueueLoader ? "Loading…" : `${cases.length} Active Cases`}
             </span>
           </div>
         </div>
@@ -182,7 +211,11 @@ export function ClinicDashboard() {
           <div className="shrink-0 border-b border-outline-variant px-4 py-4">
             <h2 className="font-headline-md text-headline-md text-primary">Case Queue</h2>
             <p className="font-mono-clinical text-mono-clinical text-on-surface-variant">
-              {lastUpdated ? `Updated ${lastUpdated.toLocaleTimeString()}` : "Live Traffic"}
+              {showQueueLoader
+                ? "Syncing queue…"
+                : lastUpdated
+                  ? `Updated ${lastUpdated.toLocaleTimeString()}`
+                  : "Live Traffic"}
             </p>
           </div>
           <div className="flex shrink-0 flex-col gap-1 px-2 py-2">
@@ -198,10 +231,8 @@ export function ClinicDashboard() {
           </div>
 
           <div className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-unit overflow-y-auto overscroll-contain px-2 pt-2 pb-4">
-            {loading && !cases.length && (
-              <p className="px-3 text-body-md text-on-surface-variant">{LOADING_QUEUE}</p>
-            )}
-            {!loading && filtered.length === 0 && (
+            {showQueueLoader && <LoadingSkeleton lines={4} />}
+            {!showQueueLoader && filtered.length === 0 && (
               <div className="mx-2 rounded-xl border border-dashed border-outline-variant bg-surface px-4 py-6 text-center">
                 <Icon name="inbox" className="mb-2 text-3xl text-outline" />
                 <p className="font-body-md text-body-md text-on-surface-variant">
@@ -221,7 +252,9 @@ export function ClinicDashboard() {
         </aside>
 
         <main className="flex h-[calc(100dvh-48px)] min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-          {!selected ? (
+          {showMainLoader ? (
+            <LoadingState label={queueInitialLoading ? LOADING_DASHBOARD : LOADING_CASE} />
+          ) : !selected ? (
             <EmptyMain onRefresh={() => void handleRefresh()} />
           ) : (
             <>
@@ -232,7 +265,7 @@ export function ClinicDashboard() {
                     {detailError}
                   </p>
                 )}
-                <PatientHeader c={detail ?? selected} />
+                <PatientHeader c={headerCase ?? selected} loading={detailInitialLoading} />
                 {showOverridePanel(detail ?? selected) && (
                   <OverrideButtons
                     phone={selected.phone}
@@ -246,7 +279,7 @@ export function ClinicDashboard() {
 
               <div className="flex min-h-0 flex-1 flex-col px-4 pb-3">
                 <ConversationThread
-                  loading={detailLoading}
+                  loading={detailInitialLoading}
                   messages={detail?.messages ?? []}
                   phone={selected.phone}
                   reply={detail?.reply ?? selected.reply}
@@ -350,13 +383,14 @@ function AiReasoningPanel({ reasoning }: { reasoning: string }) {
   );
 }
 
-function PatientHeader({ c }: { c: CaseSummary }) {
+function PatientHeader({ c, loading }: { c: CaseSummary; loading?: boolean }) {
   const isP1 = c.priority === "P1";
   const status = c.slots_complete
     ? "Intake complete"
     : c.pending_slot
-      ? `Awaiting: ${c.pending_slot}`
+      ? `Awaiting: ${formatSlotLabel(c.pending_slot)}`
       : "In triage";
+  const slotEntries = Object.entries(c.slots ?? {});
 
   return (
     <div
@@ -384,16 +418,42 @@ function PatientHeader({ c }: { c: CaseSummary }) {
           <span className="text-on-surface-variant">{status}</span>
         </div>
       </div>
-      {Object.keys(c.slots ?? {}).length > 0 && (
-        <dl className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-outline-variant/25 pt-2">
-          {Object.entries(c.slots).map(([k, v]) => (
-            <div key={k} className="flex gap-1.5 text-[12px]">
-              <dt className="text-on-surface-variant">{k}:</dt>
-              <dd className="font-medium text-on-surface">{v}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
+      <section className="mt-2 border-t border-outline-variant/25 pt-2">
+        <p className="mb-1.5 flex items-center gap-1 font-label-md text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
+          <Icon name="clinical_notes" className="text-[14px]" />
+          Intake details
+          {loading && (
+            <Icon name="progress_activity" className="ml-1 animate-spin text-[12px] text-primary" />
+          )}
+          {c.pending_slot && !c.slots_complete && (
+            <span className="ml-1 normal-case font-normal text-primary">
+              · asking for {formatSlotLabel(c.pending_slot)}
+            </span>
+          )}
+        </p>
+        {loading && slotEntries.length === 0 ? (
+          <div className="animate-pulse space-y-1.5" aria-hidden="true">
+            <div className="h-10 rounded-md bg-surface-container-high" />
+            <div className="h-10 w-4/5 rounded-md bg-surface-container-high" />
+          </div>
+        ) : slotEntries.length === 0 ? (
+          <p className="font-body-md text-[12px] text-on-surface-variant">{EMPTY_INTAKE_SLOTS}</p>
+        ) : (
+          <dl className="flex flex-wrap gap-x-4 gap-y-1.5">
+            {slotEntries.map(([key, value]) => (
+              <div
+                key={key}
+                className="min-w-[140px] rounded-md border border-outline-variant/40 bg-surface-container-lowest px-2 py-1"
+              >
+                <dt className="font-label-md text-[10px] uppercase tracking-wide text-on-surface-variant">
+                  {formatSlotLabel(key)}
+                </dt>
+                <dd className="font-body-md text-[12px] font-medium text-on-surface">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </section>
     </div>
   );
 }
@@ -425,7 +485,9 @@ function ConversationThread({
         </p>
       </div>
       <div className="custom-scrollbar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-3">
-        {loading && <p className="text-body-md text-on-surface-variant">{LOADING_CASE}</p>}
+        {loading && !hasSession && !hasDb && (
+          <LoadingState label={LOADING_CASE} compact />
+        )}
         {!loading && !hasSession && !hasDb && (
           <p className="text-body-md text-on-surface-variant">{NO_MESSAGES}</p>
         )}

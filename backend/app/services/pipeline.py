@@ -12,7 +12,7 @@ from app.agent.graph import invoke_graph
 from app.agent.state import TriageState, fresh_state, latest_message, merge_state
 from app.channels import WEB, WHATSAPP
 from app.services import memory, web_memory, whatsapp
-from app.services.persist import persist_incoming_message, persist_outbound_message
+from app.services.persist import persist_incoming_message, persist_intake_state, persist_outbound_message
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,24 @@ def _store_for_channel(channel: Channel) -> tuple[LoadFn, SaveFn]:
     if channel == WEB:
         return web_memory.load, web_memory.save
     return memory.load, memory.save
+
+
+def apply_intake_addendum(state: TriageState) -> dict[str, Any]:
+    """After intake is complete, store optional appointment time/day notes in slots."""
+    if state.get("pending_slot") or not state.get("slots_complete"):
+        return {}
+    text = latest_message(state).strip()
+    if not text:
+        return {}
+    lowered = text.lower()
+    if not any(
+        token in lowered
+        for token in (":", "am", "pm", "baje", "subah", "sham", "raat", "morning", "evening")
+    ):
+        return {}
+    slots = dict(state.get("slots") or {})
+    slots["preferred_time"] = text
+    return {"slots": slots}
 
 
 def apply_pending_slot_answer(state: TriageState) -> dict[str, Any]:
@@ -91,6 +109,7 @@ async def _process_inbound(
                 db=db, patient_phone=session_id, body=body, raw_payload=raw_payload
             )
             persist_outbound_message(db=db, patient_phone=session_id, body=_RESET_ACK)
+            persist_intake_state(db=db, patient_phone=session_id, state=state)
         if deliver_whatsapp:
             whatsapp.send_text(chat_id=session_id, message=_RESET_ACK)
         logger.info("SESSION RESET  channel=%s %s=%s", channel, log_label, session_id)
@@ -117,29 +136,15 @@ async def _process_inbound(
             whatsapp.send_text(chat_id=session_id, message=HOLD_REPLY)
         return state
 
-    if (
-        state.get("slots_complete")
-        and not state.get("pending_slot")
-        and not state.get("awaiting_human_review")
-    ):
-        clearable = cast(dict[str, Any], state)
-        for _field in (
-            "priority",
-            "confidence",
-            "reasoning",
-            "reply_intent",
-            "reply",
-            "slots_complete",
-            "escalated",
-            "routed_to",
-            "slack_notified",
-            "human_review_resolved",
-        ):
-            clearable.pop(_field, None)
-
     slot_patch = apply_pending_slot_answer(state)
     if slot_patch:
         state = merge_state(state, slot_patch)
+        # Reset gather cap so every patient answer gets a fresh budget.
+        state["clarification_rounds"] = 0
+    addendum_patch = apply_intake_addendum(state)
+    if addendum_patch:
+        state = merge_state(state, addendum_patch)
+    if slot_patch:
         for k, v in (slot_patch.get("slots") or {}).items():
             logger.info(
                 "SLOT ANSWER  channel=%-9s %-15s  %s = %r",
@@ -159,6 +164,7 @@ async def _process_inbound(
             body=body,
             raw_payload=raw_payload,
         )
+        persist_intake_state(db=db, patient_phone=session_id, state=result)
         reply = (result.get("reply") or "").strip()
         if reply:
             persist_outbound_message(db=db, patient_phone=session_id, body=reply)
@@ -256,8 +262,10 @@ async def resume_after_override(
     await memory.save(chat_id, result)
 
     reply = (result.get("reply") or "").strip()
-    if db is not None and reply:
-        persist_outbound_message(db=db, patient_phone=chat_id, body=reply)
+    if db is not None:
+        persist_intake_state(db=db, patient_phone=chat_id, state=result)
+        if reply:
+            persist_outbound_message(db=db, patient_phone=chat_id, body=reply)
     if reply:
         whatsapp.send_text(chat_id=chat_id, message=reply)
 
