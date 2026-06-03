@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import logging
 
+from app.agent.specialists import get_profile
+from app.agent.specialists.router import pick_specialist
 from app.agent.state import (
     P1_KEYWORDS,
     TriageState,
@@ -14,13 +16,6 @@ from app.agent.triage import classify_message_with_gemini
 from app.services import slack
 
 logger = logging.getLogger(__name__)
-
-# One question per missing slot (Phase 4 — specialists replace prompts in Phase 8).
-SLOT_QUESTIONS: dict[str, str] = {
-    "chief_complaint": "What is the main problem or symptom we should know about?",
-    "symptom_duration": "How long have you had this (hours, days, or weeks)?",
-    "preferred_day": "Which day works best for an appointment (e.g. Monday, Wednesday)?",
-}
 
 MAX_CLARIFICATION_ROUNDS = 2
 
@@ -106,7 +101,11 @@ def gather_slots_node(state: TriageState) -> dict:
         }
 
     slot_name = missing[0]
-    question = SLOT_QUESTIONS.get(slot_name, f"Please share your {slot_name}.")
+    profile = get_profile(state.get("routed_to"))
+    question = profile.slot_questions.get(
+        slot_name,
+        f"Please share your {slot_name}.",
+    )
     return {
         "clarification_rounds": rounds + 1,
         "pending_slot": slot_name,
@@ -115,18 +114,10 @@ def gather_slots_node(state: TriageState) -> dict:
 
 
 def route_node(state: TriageState) -> dict:
-    """Assign department from priority + message keywords (specialists in Phase 8)."""
-    text = " ".join(state.get("messages") or []).lower()
-    priority = state.get("priority")
-
-    if priority == "P1" or any(k in text for k in ("seene", "chest", "dil", "heart")):
-        department = "cardiology"
-    elif any(k in text for k in ("bach", "bachay", "child", "infant", "baby")):
-        department = "pediatrics"
-    else:
-        department = "general"
-
-    return {"routed_to": department}
+    """Pick specialist before slot-filling; idempotent if already routed."""
+    if state.get("routed_to"):
+        return {}
+    return {"routed_to": pick_specialist(state)}
 
 
 def notify_human_node(state: TriageState) -> dict:

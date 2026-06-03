@@ -122,4 +122,4 @@ def test_p3_missing_slots_pauses_with_question(mock_classify) -> None:
     assert result["slots_complete"] is False
     assert result["reply"]
     assert result.get("pending_slot") == "chief_complaint"
-    assert result.get("routed_to") is None
+    assert result.get("routed_to") == "general"

@@ -1,4 +1,4 @@
-.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-system frontend-dev frontend-install
+.PHONY: dev dev-reload kill-port install-dev lint test test-unit test-integration test-system eval frontend-dev frontend-install
 
 # Default: no --reload so webhook prints show in the terminal on Windows.
 dev:
@@ -37,6 +37,9 @@ triage-scratch:
 
 graph-scratch:
 	cd backend && python scripts/scratch_langgraph_triage.py
+
+eval:
+	cd backend && python -m evals.test_classification --show-errors
 
 frontend-install:
 	cd frontend && npm install

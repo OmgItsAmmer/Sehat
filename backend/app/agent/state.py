@@ -7,12 +7,7 @@ from typing import Annotated
 
 from typing_extensions import TypedDict
 
-# Fields the graph reads/writes across nodes (Phase 4+).
-REQUIRED_SLOTS: tuple[str, ...] = (
-    "chief_complaint",
-    "symptom_duration",
-    "preferred_day",
-)
+from app.agent.specialists.general import REQUIRED_SLOTS
 
 # Hard override — LLM output ignored when matched (see README triage logic).
 P1_KEYWORDS: tuple[str, ...] = (
@@ -74,5 +69,8 @@ def latest_message(state: TriageState) -> str:
 
 
 def missing_slots(state: TriageState) -> list[str]:
+    from app.agent.specialists import get_profile
+
+    profile = get_profile(state.get("routed_to"))
     filled = state.get("slots") or {}
-    return [name for name in REQUIRED_SLOTS if not filled.get(name)]
+    return [name for name in profile.required_slots if not filled.get(name)]
