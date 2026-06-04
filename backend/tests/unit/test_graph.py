@@ -69,6 +69,32 @@ def test_oos_path_skips_gemini_slots(mock_classify) -> None:
 
 
 @patch("app.agent.nodes.classify_message_with_openai")
+def test_faq_skips_slot_gathering_with_clinic_context(mock_classify) -> None:
+    mock_classify.return_value = TriageResult(
+        priority="P3",
+        confidence=0.95,
+        reasoning="Clinic timings query.",
+    )
+    result = graph.invoke(
+        {
+            "messages": ["what are the clinic timings?"],
+            "patient_phone": "+923001234567",
+            "confidence": 0.0,
+            "clarification_rounds": 0,
+            "slots": {},
+            "slots_complete": False,
+            "escalated": False,
+            "reply": "",
+            "clinic_context": "CLINIC_KNOWLEDGE:\nThe clinic is open from 9am to 11pm daily.",
+        }
+    )
+
+    assert result["priority"] == "P3"
+    assert result["slots_complete"] is True
+    assert result["reply"].startswith("INFO_DESK:")
+
+
+@patch("app.agent.nodes.classify_message_with_openai")
 def test_p3_with_slots_routes_to_general(mock_classify) -> None:
     mock_classify.return_value = TriageResult(
         priority="P3",

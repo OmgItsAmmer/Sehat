@@ -118,14 +118,20 @@ def emergency_exit_node(state: TriageState) -> dict:
 def oos_exit_node(state: TriageState) -> dict:
     """Out-of-scope redirect — no slot-filling."""
     ctx = (state.get("clinic_context") or "").strip()
-    if ctx and "CLINIC_KNOWLEDGE" in ctx:
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
+        intent = (
+            "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
+            "Then ask if they have a health concern today."
+        )
+        if "APPOINTMENT_LOOKUP" in ctx:
+            intent = (
+                "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                "Then ask if they have a health concern today."
+            )
         return {
             "priority": "P3",
             "slots_complete": True,
-            "reply_intent": (
-                "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
-                "Then ask if they have a health concern today."
-            ),
+            "reply_intent": intent,
         }
     return {
         "slots_complete": True,
@@ -145,6 +151,24 @@ def slot_check_node(state: TriageState) -> dict:
     # Forced completion (max clarification rounds) — do not re-open slot gathering.
     if state.get("slots_complete") and state.get("escalated"):
         return {}
+
+    # FAQ / queue lookup queries bypass slot gathering
+    ctx = (state.get("clinic_context") or "").strip()
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
+        intent = (
+            "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
+            "Then ask if they have a health concern today."
+        )
+        if "APPOINTMENT_LOOKUP" in ctx:
+            intent = (
+                "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                "Then ask if they have a health concern today."
+            )
+        return {
+            "slots_complete": True,
+            "reply_intent": intent,
+        }
+
     missing = missing_slots(state)
     return {"slots_complete": len(missing) == 0}
 
@@ -242,6 +266,9 @@ def _can_offer_appointment(state: TriageState) -> bool:
     if state.get("appointment_offered") and state.get("awaiting_appointment_consent"):
         return False
     if state.get("appointment_offered"):
+        return False
+    ctx = (state.get("clinic_context") or "").strip()
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
         return False
     return True
 
@@ -352,7 +379,7 @@ def decline_appointment_node(state: TriageState) -> dict:
 def confirm_user_node(state: TriageState) -> dict:
     """Set reply_intent for the happy-path confirmation (P2/P3 fully slotted)."""
     prior = (state.get("reply_intent") or "").strip()
-    if prior.startswith(("EMERGENCY", "OOS", "ESCALATE", "HOLD")):
+    if prior.startswith(("EMERGENCY", "OOS", "ESCALATE", "HOLD", "INFO_DESK")):
         return {}
     if prior.startswith(("CONFIRMED", "ADDENDUM")):
         return {}

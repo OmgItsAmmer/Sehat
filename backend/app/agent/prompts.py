@@ -83,8 +83,8 @@ Classify the user's message into exactly one priority:
   unconscious, heavy bleeding, stroke symptoms)
 - P2: urgent — needs same-day or next-day attention (high fever, severe pain, vomiting, injury)
 - P3: routine — can be scheduled (mild symptoms, follow-up, prescription refill, general illness)
-- OOS: ONLY for administrative topics with zero medical content (billing disputes,
-  visa medical certificates, lab result printouts, pharmacy stock queries)
+- OOS: ONLY for administrative topics with zero medical content (billing disputes, consultation fees,
+  payments, visa medical certificates, lab result printouts, pharmacy stock queries)
 
 Clinic information questions are NOT OOS — classify as P3 with confidence ≥ 0.85:
 - opening hours, clinic timings, which doctors work here, reception contact, appointment queue
