@@ -1,468 +1,179 @@
-<div align="center">
+# Sehat (صحت) — AI Clinic Intake Triage
 
-<br />
+**Practical assignment submission · June 2026**
+
+| | |
+|---|---|
+| **Case study** | [AI Intern Case Study (PDF)](https://drive.google.com/file/d/15jw-jFdx_2puXqi-Lwbdf7iT9uZczNTC/view?usp=sharing) |
+| **Scenario** | Pakistani clinic — receptionist **Sana** faces 34+ WhatsApp messages before 9am; urgency is not FIFO |
+| **Solution** | Agentic triage: classify → gather context → route → book — with human override when uncertain |
+| **Stack** | LangGraph · FastAPI · PostgreSQL · Redis · React · Green API (WhatsApp) · OpenAI |
+
+---
+
+## 1. Problem (case study)
+
+Patients message the clinic on WhatsApp in **Urdu, English, and Roman Urdu** — appointments, fees, mild symptoms, and emergencies mixed in one inbox. Sana reads messages **in arrival order**. A chest-pain message (`seene mein dard`) can sit behind routine chats for **40+ minutes**.
+
+**Core insight:** A human inbox is FIFO; **medical urgency is not FIFO.** Sehat turns the inbox into a **priority-ranked, pre-documented queue** before Sana picks up the phone.
+
+---
+
+## 2. Approach (how I solved it)
+
+| Step | Decision | Why |
+|------|----------|-----|
+| 1 | **Prove the pipe first** (WhatsApp → API → DB) | No point tuning prompts if messages never arrive |
+| 2 | **LangGraph state machine**, not a free-form chatbot | Explicit branches: emergency exit, slot-fill, human pause, booking |
+| 3 | **Structured LLM output** (JSON schema) on classify & reply | Avoid parsing fragile natural language in code |
+| 4 | **Hardcoded P1 keyword override** before the model | Safety: chest pain / unconscious / breathing — alert even if the model hesitates |
+| 5 | **Freeze graph when confidence < 0.75** | Receptionist **Agree / Upgrade / Downgrade** — correction resumes the same session |
+| 6 | **Specialist sub-flows** (general · pediatrics · cardiology) | Different slot questions per route |
+| 7 | **RAG clinic desk + appointment slots** | Hours/doctors from KB; 15-min per-doctor booking after intake |
+
+Build order and phase notes: [`docs/plan.md`](docs/plan.md)
+
+---
+
+## 3. Case study requirements → what I delivered
+
+| Case need | Implementation |
+|-----------|----------------|
+| Triage by urgency | **P1** emergency · **P2** urgent · **P3** routine · **OOS** (billing, visa, labs) |
+| WhatsApp channel | Green API webhook → `process_incoming_message` → LangGraph → reply |
+| Web channel (demo without WhatsApp) | React web chat + same graph / session store |
+| Natural conversation | Reply composer: greetings, Urdu/Roman Urdu, one question at a time |
+| P1 immediate escalation | Slack alert; graph skips slot-fill; advises emergency care |
+| Receptionist visibility | Dashboard: case list, conversation, priority, filled slots |
+| Human correction | Override API → updates state → graph resumes; audit in DB |
+| Returning patients | Redis session TTL + Postgres messages & intake state |
+| Clinic information | RAG over seeded [`backend/data/clinic_kb.md`](backend/data/clinic_kb.md) (hours, doctors, phone) |
+| Appointment booking | Per-doctor 15-minute slots (9:00–23:00); guest code if no phone |
+| Queue lookup | Patient asks by phone or guest code → appointment status in context |
+
+---
+
+## 4. System (one diagram)
 
 ```
-███████╗███████╗██╗  ██╗ █████╗ ████████╗
-██╔════╝██╔════╝██║  ██║██╔══██╗╚══██╔══╝
-███████╗█████╗  ███████║███████║   ██║   
-╚════██║██╔══╝  ██╔══██║██╔══██║   ██║   
-███████║███████╗██║  ██║██║  ██║   ██║   
-╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝  ╚═╝   
+WhatsApp / Web  →  FastAPI  →  load TriageState (Redis)
+                    │
+                    ▼
+              LangGraph triage
+         ┌────────┼────────┐
+         ▼        ▼        ▼
+    P1 alert   slot-fill   OOS redirect
+    (Slack)   + specialist + RAG desk
+         │        │        │
+         └────────┴────────┘
+                    ▼
+         book slot · persist · reply
+                    ▼
+         Dashboard (override · audit)
 ```
 
-### **صحت** — AI-Powered Emergency Intake Triage
-
-*Turning an unordered flood of patient messages into a ranked, routed,<br/>and already-documented work queue — before Sana even picks up the phone.*
-
-<br/>
-
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![LangGraph](https://img.shields.io/badge/LangGraph-0.2-FF6B35?style=flat-square)](https://langchain-ai.github.io/langgraph/)
-[![Claude](https://img.shields.io/badge/Claude-Sonnet_4.6-CC785C?style=flat-square)](https://anthropic.com)
-[![React](https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-22C55E?style=flat-square)](LICENSE)
-
-<br/>
-
-[**Live Demo**](#) · [**Architecture**](docs/architecture.md) · [**Deploy runbook**](docs/runbooks/flyio-deploy_runbook.md) · [**Report a Bug**](#)
-
-<br/>
-
-</div>
+Graph detail: [`docs/architecture/langgraph.md`](docs/architecture/langgraph.md)
 
 ---
 
-## The Problem
+## 5. Evidence (for reviewers)
 
-A Pakistani clinic receptionist receives **34+ WhatsApp messages every morning** before 9am. She reads them sequentially — appointments, fee questions, medicine queries — while somewhere in that unordered list, a chest pain message sits unanswered.
+| Check | Command / result |
+|-------|------------------|
+| Automated tests | `make test` — **119 tests** (unit + integration + system) |
+| Classification eval | `make eval` — **20 labelled** Urdu/English messages ([`backend/evals/fixtures.py`](backend/evals/fixtures.py)) |
+| Lint / types | `make lint` — ruff + mypy |
+| P1 path | Keyword `seene mein dard` → P1 without relying on model luck (`test_graph.py`) |
+| Human pause | Low confidence → hold message until override (`test_pipeline.py`) |
 
-> *A human inbox is a FIFO queue. Medical urgency is not FIFO.*
+**Demo messages to try**
 
-By the time she reaches the emergency message, **40 minutes have passed.**
-
-**Sehat fixes this.**
-
----
-
-## What Sehat Does
-
-Sehat is an **agentic intake triage system** — not a chatbot. It operates as a LangGraph state machine that:
-
-- Receives patient messages from **WhatsApp, web, or voice**
-- **Classifies urgency** (P1 Emergency → P2 Urgent → P3 Routine → Out of Scope) with a confidence score
-- **Conducts a focused, natural conversation** — replies warmly in the patient's language (English / Urdu / Roman Urdu), answers greetings before asking clinical questions, and gently redirects off-topic messages
-- **Escalates P1 cases immediately** with a Slack alert, bypassing all conversation steps
-- **Packages a complete handoff** — patient name, symptoms, history, priority — before a human ever reads it
-- **Remembers returning patients** across sessions
-- Acts as a **clinic info desk** (RAG): hours, doctors, reception contact, and queue lookup by phone — alongside triage, not instead of it
-- **Books appointments automatically** after intake: 15-minute slots per doctor (9:00 AM–11:00 PM), separate calendars for general / pediatrics / cardiology
-- Lets the receptionist **override any classification** in one click, with the correction flowing back into the agent graph
-
-Sehat handles **~80% of intake autonomously.** The remaining 20% — ambiguous, complex, or emergency cases — reach a human faster and better-documented than before.
+| Message | Expected behaviour |
+|---------|-------------------|
+| `seene mein dard` | P1 · Slack alert · no booking loop |
+| `appointment chahiye back pain ke liye` | P3 · slot questions · booking offer |
+| `fee kitni hai` | OOS · polite redirect |
+| `clinic timing kya hai` | RAG hours from clinic KB |
+| `haan` (after booking offer) | Next free 15-min slot for routed doctor |
 
 ---
 
-## Demo
+## 6. Tech stack
 
-<div align="center">
-
-| Patient side (WhatsApp) | Receptionist dashboard |
-|:---:|:---:|
-| Patient sends *"seene mein dard"* | P1 alert fires in **< 4 seconds** |
-| Bot asks one clarifying question | Case appears with full context |
-| Bot confirms next steps to patient | Sana sees override buttons |
-
-</div>
-
-> **Try it:** Send a WhatsApp message to `+92-XXX-XXXXXXX` or open the [web chat](#).
-> Try these scenarios: a chest pain report, a routine appointment request, and an out-of-scope billing question.
+| Layer | Choice |
+|-------|--------|
+| Agent orchestration | LangGraph 0.2 (`backend/app/agent/`) |
+| LLM | OpenAI `gpt-4o-mini` — classify + compose (`OPENAI_API_KEY`) |
+| Embeddings (RAG) | `text-embedding-3-small` + pgvector |
+| API | FastAPI · Python 3.11+ |
+| Data | PostgreSQL 16 · Redis (sessions) · Alembic migrations |
+| Channels | Green API (WhatsApp) · React dashboard + web chat |
+| Alerts | Slack incoming webhook |
 
 ---
 
-## Architecture
+## 7. Run locally (5 minutes)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         INTAKE LAYER                            │
-│   WhatsApp (Green API)  ·  Web Chat (React)  ·  Voice (Whisper) │
-└───────────────────────────────┬─────────────────────────────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │   Input Normalizer    │
-                    │  Urdu/English · clean │
-                    └───────────┬───────────┘
-                                │
-                    ┌───────────▼───────────┐
-                    │   Urgency Classifier  │  ← Claude (tool-use)
-                    │  P1 · P2 · P3 · OOS  │
-                    └──┬──────────┬─────────┘
-                       │          │
-              P1 ──────┘    P2/P3 │
-              │                   │
-   ┌──────────▼──────┐  ┌────────▼────────────┐
-   │ Emergency Exit  │  │  Slot-Filling Agent │  ← LangGraph loop
-   │ Skip everything │  │  Asks missing info  │
-   └──────────┬──────┘  └────────┬────────────┘
-              │                   │
-              │         ┌─────────▼──────────┐
-              │         │  Specialist Router  │
-              │         │  Cardio·Paeds·Gen  │
-              │         └─────────┬──────────┘
-              │                   │
-              │         ┌─────────▼──────────┐
-              │         │ RAG Info Desk      │  ← hours, doctors, queue
-              │         │ pgvector + phone   │
-              │         └─────────┬──────────┘
-              │                   │
-              │         ┌─────────▼──────────┐
-              │         │ Appointment Booker │  ← 15 min slots / doctor
-              │         └─────────┬──────────┘
-              │                   │
-              └──────┬────────────┘
-                     │
-          ┌──────────▼──────────┐
-          │  Summary + Routing  │  ← structured handoff packet
-          └──────────┬──────────┘
-                     │
-        ┌────────────┴─────────────┐
-        │                          │
-┌───────▼────────┐        ┌────────▼────────┐
-│  Slack Alert   │        │  Case DB + Dash │
-│  Human notified│        │  Postgres · PG  │
-└────────────────┘        └─────────────────┘
+**Prerequisites:** Python 3.11+, Node 20+, Docker (Postgres + Redis).
+
+```bash
+git clone <repo-url> && cd sehat
+cp .env.example .env    # set OPENAI_API_KEY, DATABASE_URL, REDIS_URL (optional: GREEN_API_*, SLACK_*)
+
+docker compose up -d
+make migrate
+make seed-kb            # needs OPENAI_API_KEY + Postgres with pgvector
+
+make dev                # API :8000
+make frontend-dev       # UI :5173
 ```
 
-**Key design decisions:**
+WhatsApp setup: [`docs/runbooks/Green-api-whatsapp-integration_runbook.md`](docs/runbooks/Green-api-whatsapp-integration_runbook.md)  
+Production deploy: [`docs/runbooks/flyio-deploy_runbook.md`](docs/runbooks/flyio-deploy_runbook.md)
 
-- Every node calls Claude with a strict JSON schema via tool-use — no free-text parsing anywhere
-- `TriageState` persists across all turns; nodes read and write shared state
-- Confidence < 0.75 triggers `await_human_review` — the graph **freezes** until Sana acts
-- P1 keyword list is a hardcoded override — LLM output is ignored, alert fires regardless
-- Two unresolved clarification rounds → forced escalation; the bot never loops forever
-
-Full architecture notes: [`docs/architecture.md`](docs/architecture.md)
+**Makefile:** `make test` · `make lint` · `make eval` · `make migrate` · `make seed-kb`
 
 ---
 
-## Tech Stack
-
-| Layer | Technology | Why |
-|-------|-----------|-----|
-| Agent framework | **LangGraph 0.2** | State machine with real branching, interrupts, and human-in-loop |
-| LLM | **Claude Sonnet 4.6** | Tool-use / structured output on every decision node |
-| Backend | **FastAPI + Python 3.11** | Async, fast to deploy, production standard |
-| Database | **PostgreSQL 16 + pgvector** | Cases, patient memory, embeddings |
-| Session state | **Redis** | Conversation state with TTL — stale sessions auto-expire |
-| WhatsApp | **Green API** | No Meta business verification — scan QR, get webhook in 20 min |
-| Frontend | **React 18 + Vite + Tailwind** | Receptionist dashboard + web chat widget |
-| Notifications | **Slack Webhooks** | P1 alert reaches Sana in < 2 seconds |
-| Voice | **OpenAI Whisper** | Voice messages → text before entering the graph |
-| Auth | **Clerk** | Dashboard login, one-line setup |
-| Migrations | **Alembic** | Never touch schema manually |
-| Deployment | **Fly.io (API) + Vercel (frontend)** | Cheapest demo stack; Neon + Upstash for data |
-
----
-
-## Project Structure
+## 8. Repository map (high level)
 
 ```
 sehat/
-│
-├── backend/
-│   ├── app/
-│   │   ├── agent/
-│   │   │   ├── graph.py              # LangGraph graph + conditional edges
-│   │   │   ├── state.py              # TriageState TypedDict
-│   │   │   ├── nodes.py              # all node functions
-│   │   │   ├── prompts.py            # system prompts per node
-│   │   │   ├── tools.py              # Claude tool-use schemas
-│   │   │   └── specialists/
-│   │   │       ├── cardiology.py     # cardiac-specific slot questions
-│   │   │       ├── pediatrics.py     # child-specific flow
-│   │   │       ├── general.py
-│   │   │       └── router.py         # picks which specialist
-│   │   │
-│   │   ├── api/
-│   │   │   ├── whatsapp.py           # Green API webhook receiver
-│   │   │   ├── dashboard.py          # REST endpoints for React
-│   │   │   ├── human_override.py     # Sana's one-click override
-│   │   │   └── health.py
-│   │   │
-│   │   ├── services/
-│   │   │   ├── whatsapp.py           # Green API client
-│   │   │   ├── slack.py              # alert sender
-│   │   │   ├── whisper.py            # voice → text
-│   │   │   ├── memory.py             # patient memory (Redis + PG)
-│   │   │   └── rag.py                # pgvector clinic knowledge base
-│   │   │
-│   │   ├── models/                   # SQLAlchemy tables
-│   │   └── schemas/                  # Pydantic request/response shapes
-│   │
-│   ├── database/
-│   │   └── migrations/               # Alembic versioned migrations
-│   │
-│   └── evals/
-│       ├── test_classification.py    # 20 labelled Urdu/English messages
-│       ├── test_slots.py
-│       ├── test_routing.py
-│       └── fixtures.py               # ground-truth test cases
-│
-├── frontend/
-│   └── src/
-│       ├── pages/
-│       │   ├── Dashboard.tsx         # Sana's case queue
-│       │   ├── CaseDetail.tsx        # full convo + override buttons
-│       │   ├── WebChat.tsx           # patient-facing web widget
-│       │   └── Analytics.tsx         # P1 response time, volume
-│       └── components/
-│           └── dashboard/
-│               └── OverrideButtons.tsx  # human-in-loop widget
-│
-├── docs/
-│   ├── architecture.md
-│   ├── triage_logic.md
-│   ├── plan.md
-│   ├── ci-cd.md
-│   └── runbooks/
-│       ├── flyio-deploy_runbook.md      # Fly API + Vercel dashboard
-│       ├── Green-api-whatsapp-integration_runbook.md
-│       └── alembic_migration_rubooks.md
-│
-├── docker-compose.yml
-├── Makefile
-└── .env.example
+├── backend/app/agent/     # LangGraph: graph, nodes, state, specialists
+├── backend/app/services/  # pipeline, RAG, scheduling, WhatsApp, memory
+├── backend/evals/         # 20-message classification suite
+├── frontend/src/          # ClinicDashboard, web chat, override UI
+└── docs/                  # architecture, phases, runbooks
 ```
 
 ---
 
-## Getting Started
+## 9. Deeper documentation
 
-### Prerequisites
-
-- Python 3.11+
-- Node.js 20+
-- Docker Desktop
-- A WhatsApp number (personal is fine — Green API, no business verification)
-
-### 1. Clone and configure
-
-```bash
-git clone https://github.com/yourusername/sehat.git
-cd sehat
-cp .env.example .env
-```
-
-Open `.env` and fill in:
-
-```env
-# Core
-ANTHROPIC_API_KEY=        # console.anthropic.com
-DATABASE_URL=postgresql://sehat:sehat@localhost:5432/sehat
-REDIS_URL=redis://localhost:6379
-
-# WhatsApp — green-api.com (free, scan QR, done in 20 min)
-GREEN_API_INSTANCE=
-GREEN_API_TOKEN=
-
-# Notifications
-SLACK_WEBHOOK_URL=        # api.slack.com/apps → Incoming Webhooks
-
-# Optional
-OPENAI_API_KEY=           # only needed for voice message support
-CLERK_SECRET_KEY=         # only needed for dashboard auth
-```
-
-### 2. Start infrastructure
-
-```bash
-docker-compose up -d      # starts PostgreSQL + Redis
-make migrate              # runs Alembic migrations
-make seed                 # optional: loads dev fixtures
-```
-
-### 3. Run backend
-
-```bash
-cd backend
-pip install -r requirements.txt
-make dev                  # uvicorn with hot reload on :8000
-```
-
-### 4. Run frontend
-
-```bash
-cd frontend
-npm install
-npm run dev               # Vite on :5173
-```
-
-### 5. Connect WhatsApp
-
-See [`docs/runbooks/Green-api-whatsapp-integration_runbook.md`](docs/runbooks/Green-api-whatsapp-integration_runbook.md) — takes about 20 minutes. You scan a QR code in the Green API console, paste your instance ID and token into `.env`, and set your webhook URL to `https://<api>.fly.dev/api/whatsapp/webhook` when deployed.
+| Topic | Link |
+|-------|------|
+| Architecture | [`docs/architecture/architecture.md`](docs/architecture/architecture.md) |
+| Triage graph nodes & edges | [`docs/architecture/langgraph.md`](docs/architecture/langgraph.md) |
+| Human-in-the-loop (Phase 7) | [`docs/phase-7-human-override.md`](docs/phase-7-human-override.md) |
+| Eval suite (Phase 9) | [`docs/phase-9-eval-suite.md`](docs/phase-9-eval-suite.md) |
+| Build phases | [`docs/plan.md`](docs/plan.md) |
 
 ---
 
-## Makefile Commands
+## 10. Scope & trade-offs (honest limits)
 
-```bash
-make dev          # start backend dev server
-make migrate      # run pending Alembic migrations
-make seed         # load dev fixtures
-make eval         # run classification accuracy suite
-make test         # run full test suite
-make lint         # ruff + mypy
-make build        # docker build all services
-make up           # docker-compose up
-make down         # docker-compose down
-make logs         # tail all service logs
-```
-
----
-
-## Evaluation
-
-Sehat ships with a labelled test suite of 20 real-world messages in Urdu and English across all four priority levels. Run it before every deploy:
-
-```bash
-make eval
-```
-
-```
-Classification accuracy report
-────────────────────────────────
-P1  (emergency)   8/8   100%
-P2  (urgent)      5/6    83%
-P3  (routine)     5/5   100%
-OOS               1/1   100%
-────────────────────────────────
-Overall          19/20   95%
-Avg confidence    0.91
-```
-
----
-
-## Human-in-the-Loop
-
-When confidence falls below 0.75, the LangGraph graph **pauses** at `await_human_review`. Sana sees the case on her dashboard with three buttons:
-
-- **Agree** — classification is correct, resume graph
-- **Upgrade** — raise priority, resume with correction logged
-- **Downgrade** — lower priority, resume with correction logged
-
-Every override is stored in the `overrides` table with timestamp, original classification, correction, and the receptionist's ID. This audit trail is what separates a clinical tool from a toy.
-
----
-
-## Triage Logic
-
-| Priority | Criteria | Bot action |
-|----------|---------|-----------|
-| **P1 Emergency** | Cardiac symptoms, stroke, unconsciousness, heavy bleeding, seizures, suicidal ideation | Bypass all conversation → immediate Slack alert → advise 1122 |
-| **P2 Urgent** | High fever (esp. children), moderate acute pain, suspected fracture, diabetic concern | Gather slots quickly → route to specialist → same-day booking |
-| **P3 Routine** | Mild ongoing symptoms, follow-ups, prescription refills, checkups | Full slot-filling flow → standard appointment booking |
-| **OOS** | Billing, visa medicals, lab results, pharmacy | Polite redirect with alternative resource → log and close |
-
-P1 keywords (`seene mein dard`, `chest pain`, `unconscious`, `nahi saans`, ...) are **hardcoded overrides** — the LLM result is ignored and the alert fires regardless of confidence score.
-
-Full logic: [`docs/triage_logic.md`](docs/triage_logic.md)
-
----
-
-## Deployment
-
-Production uses **Fly.io** for the FastAPI backend and **Vercel** for the React dashboard. Postgres stays on **Neon**; Redis on **Upstash** (both free tier).
-
-```bash
-# Backend (Fly.io)
-fly auth login
-cd backend && fly launch --no-deploy --copy-config --region sin --no-db --no-redis -y
-fly secrets set DATABASE_URL=... REDIS_URL=...   # see runbook
-make migrate                                     # Neon, from laptop
-fly deploy
-
-# Frontend (Vercel) — import repo, root directory frontend/, set:
-#   VITE_API_URL=https://<your-api>.fly.dev
-# Or: cd frontend && vercel --prod
-```
-
-Full step-by-step (Fly `fly.toml`, Vercel env vars, Green API webhook, pre-demo checklist): [`docs/runbooks/flyio-deploy_runbook.md`](docs/runbooks/flyio-deploy_runbook.md).
-
----
-
-## Clinic knowledge & scheduling
-
-After `make migrate`, seed the knowledge base (requires `OPENAI_API_KEY` and Postgres with **pgvector**):
-
-```bash
-make seed-kb
-```
-
-**Clinic facts** (in [`backend/data/clinic_kb.md`](backend/data/clinic_kb.md)):
-
-| Topic | Details |
-|-------|---------|
-| Hours | 9:00 AM – 11:00 PM |
-| Doctors | Dr Saeed Sarwar (general), Dr Ammer Saeed (pediatrics), Dr Muhid Saeed (cardiology) |
-| Reception | Fatima — **03236508184** |
-
-**Intake → booking flow (P2/P3; P1 emergencies skip scheduling):**
-
-1. Specialist slots (symptoms) + **contact phone** + **preferred day** for every route
-2. Bot states visit type (general / pediatrics / cardiology) and asks if the patient wants an appointment
-3. On **yes**, the next free **15-minute** slot is booked for that doctor on that day (first slot **9:00**, second **9:15**, …)
-4. Without a phone number, a **guest code** is issued — the patient must save it for queue lookups
-
-**Example patient phrases:**
-
-- `clinic timing kya hai` → RAG answer from seeded KB
-- `mera appointment 03001234567` → queue lookup from `appointments` table
-- `haan` after booking offer → confirms auto-scheduling
-
-Env (optional): `RAG_ENABLED=true`, `EMBEDDING_MODEL=text-embedding-3-small`, `RAG_TOP_K=3`
-
----
-
-## Roadmap
-
-- [ ] Voice call intake via Twilio
-- [ ] Urdu TTS responses for low-literacy patients  
-- [x] RAG clinic knowledge base (markdown seed + pgvector)
-- [x] Per-doctor appointment booking (15-minute slots)
-- [ ] RAG on clinic PDF upload (replace markdown seed)
-- [ ] Multi-clinic support with tenant isolation
-- [ ] Analytics dashboard — P1 response time SLA tracking
-- [ ] Full calendar UI for receptionist
-
----
-
-## Contributing
-
-Pull requests are welcome. For significant changes, open an issue first.
-
-```bash
-git checkout -b feature/your-feature
-# make changes
-make test && make lint
-git commit -m "feat: your feature"
-git push origin feature/your-feature
-```
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE)
+- **Demo clinic data** in markdown seed — not a live EMR integration  
+- **Green API** used to avoid Meta Business verification for the assignment timeline  
+- **Voice** supported via Whisper when `OPENAI_API_KEY` is set; primary demo path is text  
+- **Multi-clinic / calendar UI** — out of scope for this submission; listed in product backlog in repo history  
 
 ---
 
 <div align="center">
 
-Built for the Anthropic AI Internship Case Study · June 2026
+**Submission:** AI Intern practical assignment · deadline **3 June 2026**  
+Case study: [Google Drive PDF](https://drive.google.com/file/d/15jw-jFdx_2puXqi-Lwbdf7iT9uZczNTC/view?usp=sharing)
 
-*"The hardest part wasn't the AI — it was designing the interrupt pattern<br/>so a human correction flows back into graph state without breaking the audit trail."*
+*The hardest design choice was the human-interrupt pattern: override must update graph state and audit trail without losing the patient mid-conversation.*
 
 </div>
