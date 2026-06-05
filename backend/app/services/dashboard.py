@@ -135,9 +135,8 @@ def _case_from_db_messages(
         "display_name": _display_name(phone),
         "priority": intake.get("priority"),
         "confidence": intake.get("confidence") or 0.0,
-        "reasoning": intake.get("reasoning") or (
-            "Persisted intake — no live triage session in Redis."
-        ),
+        "reasoning": intake.get("reasoning")
+        or ("Persisted intake — no live triage session in Redis."),
         "escalated": False,
         "slots_complete": bool(intake.get("slots_complete")),
         "slots": slots,

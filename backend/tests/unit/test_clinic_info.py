@@ -42,8 +42,6 @@ def test_build_clinic_context_asks_for_phone() -> None:
 
 def test_build_clinic_context_with_previous_messages() -> None:
     ctx = build_clinic_context(
-        db=None,
-        message="03001234567",
-        session_messages=["what is my queue number?", "03001234567"]
+        db=None, message="03001234567", session_messages=["what is my queue number?", "03001234567"]
     )
     assert "APPOINTMENT_LOOKUP" in ctx

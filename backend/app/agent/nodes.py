@@ -131,7 +131,8 @@ def oos_exit_node(state: TriageState) -> dict:
                 )
             else:
                 intent = (
-                    "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                    "INFO_DESK: report the appointment status/timings "
+                    "to the patient using CLINIC_CONTEXT. "
                     "Then ask if they have a health concern today."
                 )
         return {
@@ -173,7 +174,8 @@ def slot_check_node(state: TriageState) -> dict:
                 )
             else:
                 intent = (
-                    "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                    "INFO_DESK: report the appointment status/timings "
+                    "to the patient using CLINIC_CONTEXT. "
                     "Then ask if they have a health concern today."
                 )
         return {

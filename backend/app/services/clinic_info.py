@@ -93,20 +93,36 @@ def is_queue_status_query(text: str) -> bool:
     if is_bare_phone_message(text):
         return False
     lowered = text.lower()
-    
+
     # Matches: "queue", "wait", "turn", "number kitna", "status", etc.
-    if any(kw in lowered for kw in (
-        "queue", "wait", "waiting", "turn", "number kitna", "status", "lookup", "check"
-    )):
+    if any(
+        kw in lowered
+        for kw in ("queue", "wait", "waiting", "turn", "number kitna", "status", "lookup", "check")
+    ):
         return True
-        
+
     # Matches: "my appointment", "appointment date", "appointment time", "when is my appointment"
-    if "appointment" in lowered and any(kw in lowered for kw in ("my", "mera", "meri", "date", "time", "when", "kab", "status", "scheduled")):
+    if "appointment" in lowered and any(
+        kw in lowered
+        for kw in (
+            "my",
+            "mera",
+            "meri",
+            "date",
+            "time",
+            "when",
+            "kab",
+            "status",
+            "scheduled",
+        )
+    ):
         return True
-        
-    if "booking" in lowered and any(kw in lowered for kw in ("my", "mera", "meri", "status", "check")):
+
+    if "booking" in lowered and any(
+        kw in lowered for kw in ("my", "mera", "meri", "status", "check")
+    ):
         return True
-        
+
     return False
 
 
@@ -134,8 +150,10 @@ def build_clinic_context(
 ) -> str:
     """RAG chunks + optional appointment lookup for composer."""
     is_bare_phone = is_bare_phone_message(message)
-    has_prev_queue_query = session_messages and any(is_queue_status_query(m) for m in session_messages)
-    
+    has_prev_queue_query = session_messages and any(
+        is_queue_status_query(m) for m in session_messages
+    )
+
     if skip_db_lookup or (is_bare_phone and not has_prev_queue_query):
         return ""
 

@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from datetime import UTC, datetime
+from typing import Any
+
+from sqlalchemy.orm import sessionmaker
 
 from app.agent.state import TriageState
 from app.agent.triage import classify_message_with_openai
@@ -54,8 +58,8 @@ async def check_all_sessions() -> None:
 async def _check_and_finalize_session(
     session_id: str,
     state: TriageState,
-    save_fn: callable,
-    db_sessionmaker: get_sessionmaker | None,
+    save_fn: Callable[[str, TriageState], Any],
+    db_sessionmaker: sessionmaker | None,
 ) -> None:
     """Evaluate one session for inactivity, run final classification, notify Slack, and persist."""
     if state.get("intake_finalized"):

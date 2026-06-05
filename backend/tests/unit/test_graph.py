@@ -112,7 +112,10 @@ def test_appointment_lookup_asks_for_phone_and_then_results(mock_classify) -> No
             "slots_complete": False,
             "escalated": False,
             "reply": "",
-            "clinic_context": "APPOINTMENT_LOOKUP: Please ask the patient to share the mobile number they used when booking, or their guest code, so we can look up their appointment.",
+            "clinic_context": (
+                "APPOINTMENT_LOOKUP: Please ask the patient to share the mobile number "
+                "they used when booking, or their guest code, so we can look up their appointment."
+            ),
         }
     )
 
@@ -131,7 +134,9 @@ def test_appointment_lookup_asks_for_phone_and_then_results(mock_classify) -> No
             "slots_complete": True,
             "escalated": False,
             "reply": "",
-            "clinic_context": "APPOINTMENT_LOOKUP: Dr Saeed Sarwar on 2026-06-05 at 09:15. (contact: 03001234567)",
+            "clinic_context": (
+                "APPOINTMENT_LOOKUP: Dr Saeed Sarwar on 2026-06-05 at 09:15. (contact: 03001234567)"
+            ),
         }
     )
 
@@ -314,6 +319,7 @@ def test_book_appointment_triggers_classification_and_slack(
     _mock_compose,
 ) -> None:
     from unittest.mock import MagicMock
+
     mock_book.return_value = {
         "appointment_date": "2026-06-05",
         "appointment_time": "09:15",
