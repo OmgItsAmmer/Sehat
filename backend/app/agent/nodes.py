@@ -118,21 +118,34 @@ def emergency_exit_node(state: TriageState) -> dict:
 def oos_exit_node(state: TriageState) -> dict:
     """Out-of-scope redirect — no slot-filling."""
     ctx = (state.get("clinic_context") or "").strip()
-    if ctx and "CLINIC_KNOWLEDGE" in ctx:
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
+        intent = (
+            "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
+            "Then ask if they have a health concern today."
+        )
+        if "APPOINTMENT_LOOKUP" in ctx:
+            if "Please ask the patient" in ctx:
+                intent = (
+                    "INFO_DESK: ask the patient to share the mobile number they used "
+                    "when booking, or their guest code, so we can look up their appointment."
+                )
+            else:
+                intent = (
+                    "INFO_DESK: report the appointment status/timings "
+                    "to the patient using CLINIC_CONTEXT. "
+                    "Then ask if they have a health concern today."
+                )
         return {
             "priority": "P3",
             "slots_complete": True,
-            "reply_intent": (
-                "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
-                "Then ask if they have a health concern today."
-            ),
+            "reply_intent": intent,
         }
     return {
         "slots_complete": True,
         "reply_intent": (
             "OOS: the patient asked about something outside the bot's scope "
             "(billing, visa letters, lab printouts, pharmacy stock, or unrelated topics). "
-            "Warmly tell them those are handled at the City Medical Center reception "
+            "Warmly tell them those are handled at the Dr Muhid Clinics reception "
             "(Fatima, 03236508184). "
             "Then ask if they have any health concern you can help with today. "
             "End with: Type *reset* to start a fresh conversation anytime."
@@ -145,6 +158,31 @@ def slot_check_node(state: TriageState) -> dict:
     # Forced completion (max clarification rounds) — do not re-open slot gathering.
     if state.get("slots_complete") and state.get("escalated"):
         return {}
+
+    # FAQ / queue lookup queries bypass slot gathering
+    ctx = (state.get("clinic_context") or "").strip()
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
+        intent = (
+            "INFO_DESK: answer the patient's clinic question using CLINIC_CONTEXT only. "
+            "Then ask if they have a health concern today."
+        )
+        if "APPOINTMENT_LOOKUP" in ctx:
+            if "Please ask the patient" in ctx:
+                intent = (
+                    "INFO_DESK: ask the patient to share the mobile number they used "
+                    "when booking, or their guest code, so we can look up their appointment."
+                )
+            else:
+                intent = (
+                    "INFO_DESK: report the appointment status/timings "
+                    "to the patient using CLINIC_CONTEXT. "
+                    "Then ask if they have a health concern today."
+                )
+        return {
+            "slots_complete": True,
+            "reply_intent": intent,
+        }
+
     missing = missing_slots(state)
     return {"slots_complete": len(missing) == 0}
 
@@ -243,6 +281,9 @@ def _can_offer_appointment(state: TriageState) -> bool:
         return False
     if state.get("appointment_offered"):
         return False
+    ctx = (state.get("clinic_context") or "").strip()
+    if ctx and ("CLINIC_KNOWLEDGE" in ctx or "APPOINTMENT_LOOKUP" in ctx):
+        return False
     return True
 
 
@@ -320,6 +361,8 @@ def book_appointment_node(state: TriageState) -> dict:
         "appointment_booked": True,
         "awaiting_appointment_consent": False,
         "appointment_consent": None,
+        "intake_finalized": True,
+        "slots_complete": True,
         "reply_intent": (
             f"BOOKED: appointment confirmed with {result['doctor_label']} on "
             f"{result['appointment_date']} at {result['appointment_time']}. "
@@ -335,6 +378,31 @@ def book_appointment_node(state: TriageState) -> dict:
             "for future lookups (no phone on file). "
             "Reception Fatima: 03236508184."
         )
+
+    # Classify case based on all chats
+    history = "\n".join(state.get("messages") or [])
+    if history:
+        try:
+            classification = classify_message_with_openai(history)
+            updates["priority"] = classification.priority
+            updates["confidence"] = classification.confidence
+            updates["reasoning"] = classification.reasoning
+
+            # Notify Slack if P1 or P2, and not already notified
+            if classification.priority in ("P1", "P2") and not state.get("slack_notified"):
+                preview = state["messages"][-1] if state.get("messages") else ""
+                sent = slack.send_triage_alert(
+                    patient_phone=session_phone,
+                    priority=classification.priority,
+                    routed_to=routed,
+                    reasoning=classification.reasoning,
+                    message_preview=preview,
+                    escalated=bool(state.get("escalated")),
+                )
+                updates["slack_notified"] = sent
+        except Exception:
+            logger.exception("Final classification failed during booking completion")
+
     return updates
 
 
@@ -352,7 +420,7 @@ def decline_appointment_node(state: TriageState) -> dict:
 def confirm_user_node(state: TriageState) -> dict:
     """Set reply_intent for the happy-path confirmation (P2/P3 fully slotted)."""
     prior = (state.get("reply_intent") or "").strip()
-    if prior.startswith(("EMERGENCY", "OOS", "ESCALATE", "HOLD")):
+    if prior.startswith(("EMERGENCY", "OOS", "ESCALATE", "HOLD", "INFO_DESK")):
         return {}
     if prior.startswith(("CONFIRMED", "ADDENDUM")):
         return {}

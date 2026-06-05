@@ -17,10 +17,13 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+from app.database.session import normalize_database_url
+
+
 def get_url() -> str:
     if not settings.database_url:
         raise RuntimeError("DATABASE_URL is required to run migrations")
-    return settings.database_url
+    return normalize_database_url(settings.database_url)
 
 
 def run_migrations_offline() -> None:

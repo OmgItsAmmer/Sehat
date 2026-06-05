@@ -93,9 +93,37 @@ def is_queue_status_query(text: str) -> bool:
     if is_bare_phone_message(text):
         return False
     lowered = text.lower()
-    if not any(kw in lowered for kw in _QUEUE_KEYWORDS):
-        return False
-    return extract_phone_from_text(text) is not None or "guest" in lowered
+
+    # Matches: "queue", "wait", "turn", "number kitna", "status", etc.
+    if any(
+        kw in lowered
+        for kw in ("queue", "wait", "waiting", "turn", "number kitna", "status", "lookup", "check")
+    ):
+        return True
+
+    # Matches: "my appointment", "appointment date", "appointment time", "when is my appointment"
+    if "appointment" in lowered and any(
+        kw in lowered
+        for kw in (
+            "my",
+            "mera",
+            "meri",
+            "date",
+            "time",
+            "when",
+            "kab",
+            "status",
+            "scheduled",
+        )
+    ):
+        return True
+
+    if "booking" in lowered and any(
+        kw in lowered for kw in ("my", "mera", "meri", "status", "check")
+    ):
+        return True
+
+    return False
 
 
 def _safe_lookup_queue(
@@ -118,14 +146,23 @@ def build_clinic_context(
     message: str,
     contact_phone_from_slots: str | None = None,
     skip_db_lookup: bool = False,
+    session_messages: list[str] | None = None,
 ) -> str:
     """RAG chunks + optional appointment lookup for composer."""
-    if skip_db_lookup or is_bare_phone_message(message):
+    is_bare_phone = is_bare_phone_message(message)
+    has_prev_queue_query = session_messages and any(
+        is_queue_status_query(m) for m in session_messages
+    )
+
+    if skip_db_lookup or (is_bare_phone and not has_prev_queue_query):
         return ""
 
     parts: list[str] = []
 
     wants_lookup = is_queue_status_query(message)
+    if not wants_lookup and is_bare_phone and has_prev_queue_query:
+        wants_lookup = True
+
     if wants_lookup:
         phone = extract_phone_from_text(message) or (
             normalize_phone(contact_phone_from_slots) if contact_phone_from_slots else None
@@ -147,8 +184,13 @@ def build_clinic_context(
                 parts.append(
                     "APPOINTMENT_LOOKUP: No appointment found for that phone or guest code."
                 )
+        else:
+            parts.append(
+                "APPOINTMENT_LOOKUP: Please ask the patient to share the mobile number "
+                "they used when booking, or their guest code, so we can look up their appointment."
+            )
 
-    if is_clinic_info_query(message) or is_queue_status_query(message):
+    if is_clinic_info_query(message) or wants_lookup:
         chunks = rag.retrieve(db, message)
         if chunks:
             parts.append("CLINIC_KNOWLEDGE:\n" + rag.format_context(chunks))

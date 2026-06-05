@@ -44,7 +44,7 @@ async def test_oos_message_sends_redirect_without_slack(
     )
 
     assert result["priority"] == "OOS"
-    assert "City Medical Center" in result["reply"]
+    assert "Dr Muhid Clinics" in result["reply"]
     _mock_send.assert_called_once()
 
 

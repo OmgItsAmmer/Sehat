@@ -27,6 +27,7 @@ _FALLBACK: dict[str, str] = {}
 
 _redis_client: aioredis.Redis | None = None
 _redis_disabled_until: float = 0.0
+_redis_lock = asyncio.Lock()
 
 
 def is_redis_configured() -> bool:
@@ -57,25 +58,33 @@ async def get_redis() -> aioredis.Redis | None:
         return _redis_client
     if not is_redis_configured():
         return None
-    try:
-        client = aioredis.from_url(
-            settings.redis_url,
-            decode_responses=True,
-            socket_connect_timeout=REDIS_SOCKET_CONNECT_TIMEOUT,
-            socket_timeout=REDIS_SOCKET_TIMEOUT,
-            retry_on_timeout=False,
-        )
-        await asyncio.wait_for(client.ping(), timeout=REDIS_SOCKET_CONNECT_TIMEOUT)
-        _redis_client = client
-        return _redis_client
-    except Exception:
-        logger.warning(
-            "Redis unavailable — using in-memory fallback for %.0fs",
-            REDIS_UNAVAILABLE_COOLDOWN_SECONDS,
-        )
-        _mark_redis_unavailable()
-        await _invalidate_redis()
-        return None
+
+    async with _redis_lock:
+        # Re-check under lock in case another task resolved it
+        if time.monotonic() < _redis_disabled_until:
+            return None
+        if _redis_client is not None:
+            return _redis_client
+
+        try:
+            client = aioredis.from_url(
+                settings.redis_url,
+                decode_responses=True,
+                socket_connect_timeout=REDIS_SOCKET_CONNECT_TIMEOUT,
+                socket_timeout=REDIS_SOCKET_TIMEOUT,
+                retry_on_timeout=False,
+            )
+            await asyncio.wait_for(client.ping(), timeout=REDIS_SOCKET_CONNECT_TIMEOUT)
+            _redis_client = client
+            return _redis_client
+        except Exception:
+            logger.warning(
+                "Redis unavailable — using in-memory fallback for %.0fs",
+                REDIS_UNAVAILABLE_COOLDOWN_SECONDS,
+            )
+            _mark_redis_unavailable()
+            await _invalidate_redis()
+            return None
 
 
 async def close_redis() -> None:
@@ -124,10 +133,14 @@ async def load(phone: str) -> TriageState:
         try:
             raw = await client.get(key)
             if isinstance(raw, str):
-                return loads(phone, raw)
+                try:
+                    return loads(phone, raw)
+                except json.JSONDecodeError:
+                    logger.error("Corrupted JSON in Redis for key %s", key)
+                    return fresh_state(phone)
             return fresh_state(phone)
         except Exception:
-            logger.warning("Redis load failed for %s — using in-memory fallback", phone)
+            logger.exception("Redis load failed for %s — using in-memory fallback", phone)
             _mark_redis_unavailable()
             await _invalidate_redis()
 
@@ -150,7 +163,7 @@ async def save(phone: str, state: TriageState) -> None:
             await client.set(key, payload, ex=SESSION_TTL_SECONDS)
             return
         except Exception:
-            logger.warning("Redis save failed for %s — using in-memory fallback", phone)
+            logger.exception("Redis save failed for %s — using in-memory fallback", phone)
             _mark_redis_unavailable()
             await _invalidate_redis()
 
@@ -177,7 +190,7 @@ async def clear_all() -> None:
         async for key in client.scan_iter(match=f"{SESSION_KEY_PREFIX}*"):
             await client.delete(key)
     except Exception:
-        logger.warning("Redis unavailable during clear_all — resetting client")
+        logger.exception("Redis unavailable during clear_all — resetting client")
         if _redis_client is not None:
             try:
                 await _redis_client.aclose()
@@ -198,7 +211,7 @@ async def list_phones() -> list[str]:
                 phones.append(key[prefix_len:])
             return sorted(phones)
         except Exception:
-            logger.warning("Redis list_phones failed — using in-memory fallback")
+            logger.exception("Redis list_phones failed — using in-memory fallback")
             _mark_redis_unavailable()
             await _invalidate_redis()
 

@@ -177,6 +177,7 @@ async def _process_inbound(
             db=db,
             message=body,
             contact_phone_from_slots=contact,
+            session_messages=state.get("messages"),
         )
         if clinic_ctx:
             state["clinic_context"] = clinic_ctx

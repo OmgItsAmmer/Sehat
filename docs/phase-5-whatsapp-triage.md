@@ -121,7 +121,7 @@ Test from a **second phone** with `make dev` + ngrok (see [Green API runbook](./
 |-----------------|-------------------|
 | `seene mein dard` | P1 keyword override → emergency copy (1122) → Slack alert → WhatsApp reply |
 | `appointment chahiye back pain` | Classify P3 → ask slot questions **one per message** → route when slots full |
-| `fee kitni hai` | Classify OOS → redirect to City Medical Center → **no** slot-filling, no Slack |
+| `fee kitni hai` | Classify OOS → redirect to Dr Muhid Clinics → **no** slot-filling, no Slack |
 
 ### Multi-turn slot example
 
