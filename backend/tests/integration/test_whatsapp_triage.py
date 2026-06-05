@@ -49,7 +49,7 @@ async def test_webhook_oos_scenario(
     response = client.post("/api/whatsapp/webhook", json=payload)
     assert response.status_code == 200
     mock_send.assert_called_once()
-    assert "City Medical Center" in mock_send.call_args.kwargs["message"]
+    assert "Dr Muhid Clinics" in mock_send.call_args.kwargs["message"]
 
 
 @patch("app.services.pipeline.whatsapp.send_text", return_value=True)

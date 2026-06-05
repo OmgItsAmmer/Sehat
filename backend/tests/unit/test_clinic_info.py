@@ -25,8 +25,25 @@ def test_is_clinic_info_query_hours() -> None:
 
 def test_is_queue_status_query() -> None:
     assert is_queue_status_query("mera appointment 03001234567 queue")
+    assert is_queue_status_query("what is my queue number?")
+    assert is_queue_status_query("what is my appointment date?")
+    assert not is_queue_status_query("appointment chahiye")
 
 
 def test_build_clinic_context_has_knowledge() -> None:
     ctx = build_clinic_context(db=None, message="doctor list and timings")
     assert "CLINIC_KNOWLEDGE" in ctx or "Fatima" in ctx or "Saeed" in ctx
+
+
+def test_build_clinic_context_asks_for_phone() -> None:
+    ctx = build_clinic_context(db=None, message="what is my queue number?")
+    assert "Please ask the patient to share the mobile number" in ctx
+
+
+def test_build_clinic_context_with_previous_messages() -> None:
+    ctx = build_clinic_context(
+        db=None,
+        message="03001234567",
+        session_messages=["what is my queue number?", "03001234567"]
+    )
+    assert "APPOINTMENT_LOOKUP" in ctx

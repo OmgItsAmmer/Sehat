@@ -93,6 +93,9 @@ def _patient_intake_snapshot(patient: Any) -> dict[str, Any]:
         "slots_complete": bool(getattr(patient, "slots_complete", False)),
         "pending_slot": getattr(patient, "pending_slot", None),
         "routed_to": getattr(patient, "routed_to", None),
+        "priority": getattr(patient, "priority", None),
+        "confidence": getattr(patient, "confidence", None),
+        "reasoning": getattr(patient, "reasoning", None),
     }
 
 
@@ -109,6 +112,12 @@ def _apply_patient_intake(case: dict[str, Any], patient: Any | None) -> None:
         case["pending_slot"] = snapshot["pending_slot"]
     if not case.get("routed_to") and snapshot["routed_to"]:
         case["routed_to"] = snapshot["routed_to"]
+    if not case.get("priority") and snapshot["priority"]:
+        case["priority"] = snapshot["priority"]
+    if not case.get("confidence") and snapshot["confidence"]:
+        case["confidence"] = snapshot["confidence"]
+    if not case.get("reasoning") and snapshot["reasoning"]:
+        case["reasoning"] = snapshot["reasoning"]
 
 
 def _case_from_db_messages(
@@ -124,9 +133,11 @@ def _case_from_db_messages(
     return {
         "phone": phone,
         "display_name": _display_name(phone),
-        "priority": None,
-        "confidence": 0.0,
-        "reasoning": "Persisted intake — no live triage session in Redis.",
+        "priority": intake.get("priority"),
+        "confidence": intake.get("confidence") or 0.0,
+        "reasoning": intake.get("reasoning") or (
+            "Persisted intake — no live triage session in Redis."
+        ),
         "escalated": False,
         "slots_complete": bool(intake.get("slots_complete")),
         "slots": slots,

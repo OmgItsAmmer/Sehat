@@ -124,10 +124,16 @@ def oos_exit_node(state: TriageState) -> dict:
             "Then ask if they have a health concern today."
         )
         if "APPOINTMENT_LOOKUP" in ctx:
-            intent = (
-                "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
-                "Then ask if they have a health concern today."
-            )
+            if "Please ask the patient" in ctx:
+                intent = (
+                    "INFO_DESK: ask the patient to share the mobile number they used "
+                    "when booking, or their guest code, so we can look up their appointment."
+                )
+            else:
+                intent = (
+                    "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                    "Then ask if they have a health concern today."
+                )
         return {
             "priority": "P3",
             "slots_complete": True,
@@ -138,7 +144,7 @@ def oos_exit_node(state: TriageState) -> dict:
         "reply_intent": (
             "OOS: the patient asked about something outside the bot's scope "
             "(billing, visa letters, lab printouts, pharmacy stock, or unrelated topics). "
-            "Warmly tell them those are handled at the City Medical Center reception "
+            "Warmly tell them those are handled at the Dr Muhid Clinics reception "
             "(Fatima, 03236508184). "
             "Then ask if they have any health concern you can help with today. "
             "End with: Type *reset* to start a fresh conversation anytime."
@@ -160,10 +166,16 @@ def slot_check_node(state: TriageState) -> dict:
             "Then ask if they have a health concern today."
         )
         if "APPOINTMENT_LOOKUP" in ctx:
-            intent = (
-                "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
-                "Then ask if they have a health concern today."
-            )
+            if "Please ask the patient" in ctx:
+                intent = (
+                    "INFO_DESK: ask the patient to share the mobile number they used "
+                    "when booking, or their guest code, so we can look up their appointment."
+                )
+            else:
+                intent = (
+                    "INFO_DESK: report the appointment status/timings to the patient using CLINIC_CONTEXT. "
+                    "Then ask if they have a health concern today."
+                )
         return {
             "slots_complete": True,
             "reply_intent": intent,
@@ -347,6 +359,8 @@ def book_appointment_node(state: TriageState) -> dict:
         "appointment_booked": True,
         "awaiting_appointment_consent": False,
         "appointment_consent": None,
+        "intake_finalized": True,
+        "slots_complete": True,
         "reply_intent": (
             f"BOOKED: appointment confirmed with {result['doctor_label']} on "
             f"{result['appointment_date']} at {result['appointment_time']}. "
@@ -362,6 +376,31 @@ def book_appointment_node(state: TriageState) -> dict:
             "for future lookups (no phone on file). "
             "Reception Fatima: 03236508184."
         )
+
+    # Classify case based on all chats
+    history = "\n".join(state.get("messages") or [])
+    if history:
+        try:
+            classification = classify_message_with_openai(history)
+            updates["priority"] = classification.priority
+            updates["confidence"] = classification.confidence
+            updates["reasoning"] = classification.reasoning
+
+            # Notify Slack if P1 or P2, and not already notified
+            if classification.priority in ("P1", "P2") and not state.get("slack_notified"):
+                preview = state["messages"][-1] if state.get("messages") else ""
+                sent = slack.send_triage_alert(
+                    patient_phone=session_phone,
+                    priority=classification.priority,
+                    routed_to=routed,
+                    reasoning=classification.reasoning,
+                    message_preview=preview,
+                    escalated=bool(state.get("escalated")),
+                )
+                updates["slack_notified"] = sent
+        except Exception:
+            logger.exception("Final classification failed during booking completion")
+
     return updates
 
 

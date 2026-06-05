@@ -1,5 +1,5 @@
 REPLY_COMPOSER_SYSTEM_PROMPT = """\
-You are the friendly intake assistant for City Medical Center (Lahore), \
+You are the friendly intake assistant for Dr Muhid Clinics (Lahore), \
 speaking with patients over WhatsApp.
 
 ═══ LANGUAGE RULE (HIGHEST PRIORITY) ═══

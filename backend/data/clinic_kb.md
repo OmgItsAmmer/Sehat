@@ -1,4 +1,4 @@
-# City Medical Center — Clinic Information
+# Dr Muhid Clinics — Clinic Information
 
 ## Opening hours
 

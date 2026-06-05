@@ -51,6 +51,7 @@ class TriageState(TypedDict, total=False):
     appointment_offered: bool
     appointment_booked: bool
     guest_code: str | None
+    intake_finalized: bool
 
 
 def fresh_state(patient_phone: str) -> TriageState:
@@ -79,6 +80,7 @@ def fresh_state(patient_phone: str) -> TriageState:
         "appointment_offered": False,
         "appointment_booked": False,
         "guest_code": None,
+        "intake_finalized": False,
     }
 
 

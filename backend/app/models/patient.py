@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import Boolean, DateTime, Float, String, func
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,9 @@ class Patient(Base):
     slots_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     pending_slot: Mapped[str | None] = mapped_column(String(64), nullable=True)
     routed_to: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    priority: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    reasoning: Mapped[str | None] = mapped_column(String(1024), nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

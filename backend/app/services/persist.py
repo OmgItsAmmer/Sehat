@@ -40,6 +40,9 @@ def persist_intake_state(*, db: Session, patient_phone: str, state: TriageState)
     patient.slots_complete = bool(state.get("slots_complete"))
     patient.pending_slot = state.get("pending_slot")
     patient.routed_to = state.get("routed_to")
+    patient.priority = state.get("priority")
+    patient.confidence = state.get("confidence")
+    patient.reasoning = state.get("reasoning")
     db.commit()
 
 
