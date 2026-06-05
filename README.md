@@ -1,10 +1,10 @@
 # Sehat (صحت) — AI Clinic Intake Triage
 
-**Practical assignment submission · June 2026**
+
 
 | | |
 |---|---|
-| **Case study** | [AI Intern Case Study (PDF)](https://drive.google.com/file/d/15jw-jFdx_2puXqi-Lwbdf7iT9uZczNTC/view?usp=sharing) |
+
 | **Scenario** | Pakistani clinic — receptionist **Sana** faces 34+ WhatsApp messages before 9am; urgency is not FIFO |
 | **Solution** | Agentic triage: classify → gather context → route → book — with human override when uncertain |
 | **Stack** | LangGraph · FastAPI · PostgreSQL · Redis · React · Green API (WhatsApp) · OpenAI |
@@ -171,8 +171,7 @@ sehat/
 
 <div align="center">
 
-**Submission:** AI Intern practical assignment · deadline **3 June 2026**  
-Case study: [Google Drive PDF](https://drive.google.com/file/d/15jw-jFdx_2puXqi-Lwbdf7iT9uZczNTC/view?usp=sharing)
+
 
 *The hardest design choice was the human-interrupt pattern: override must update graph state and audit trail without losing the patient mid-conversation.*
 
