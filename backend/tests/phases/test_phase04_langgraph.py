@@ -66,4 +66,4 @@ def test_oos_exits_without_slot_filling(mock_classify) -> None:
 
     assert result["priority"] == "OOS"
     assert result["slots_complete"] is True
-    assert "City Medical Center" in result["reply"]
+    assert "Dr Muhid Clinics" in result["reply"]

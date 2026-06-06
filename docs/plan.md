@@ -376,7 +376,7 @@ Scenario B — Routine appointment
 
 Scenario C — Out of scope
   Patient types: "mujhe visa medical certificate chahiye"
-  Expected:      Polite redirect to City Medical Center, case logged OOS
+  Expected:      Polite redirect to Dr Muhid Clinics, case logged OOS
 ```
 
 **Pre-demo checklist:**

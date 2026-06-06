@@ -45,6 +45,13 @@ export function priorityBadgeClasses(p: Priority): string {
   return "text-outline";
 }
 
+export function formatSlotLabel(key: string): string {
+  return key
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function initials(phone: string): string {
   const d = formatPhone(phone).slice(-2);
   return d.toUpperCase() || "PT";

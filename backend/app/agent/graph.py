@@ -11,10 +11,20 @@ from app.agent.state import TriageState, missing_slots
 from app.config import settings
 
 
+def _can_offer_appointment(state: TriageState) -> bool:
+    return nodes._can_offer_appointment(state)
+
+
 def _route_from_start(state: TriageState) -> str:
     """Resume mid-conversation without re-classifying short slot answers."""
     if state.get("awaiting_human_review"):
         return "__end__"
+
+    if state.get("appointment_consent") is True and not state.get("appointment_booked"):
+        return "book_appointment"
+    if state.get("appointment_consent") is False and state.get("appointment_offered"):
+        return "decline_appointment"
+
     priority = state.get("priority")
     if priority == "P1":
         if state.get("reply") and state.get("escalated"):
@@ -27,6 +37,8 @@ def _route_from_start(state: TriageState) -> str:
     if priority in ("P2", "P3") and (missing_slots(state) or not state.get("slots_complete")):
         return "slot_check"
     if priority in ("P2", "P3") and state.get("slots_complete"):
+        if _can_offer_appointment(state):
+            return "offer_appointment"
         if state.get("escalated") or priority == "P2":
             return "notify_human"
         return "confirm_user"
@@ -50,6 +62,8 @@ def _route_after_classify(state: TriageState) -> str:
 def _route_after_slot_check(state: TriageState) -> str:
     if not state.get("slots_complete"):
         return "gather_slots"
+    if _can_offer_appointment(state):
+        return "offer_appointment"
     priority = state.get("priority")
     if state.get("escalated") or priority in ("P1", "P2"):
         return "notify_human"
@@ -59,15 +73,24 @@ def _route_after_slot_check(state: TriageState) -> str:
 def _route_after_gather_slots(state: TriageState) -> str:
     """Pause after asking a slot question; resume on the next message."""
     if state.get("slots_complete"):
-        # Forced completion (max rounds) already has reply_intent — skip slot_check
-        # or slot_check would flip slots_complete back to False and loop forever.
         if state.get("reply_intent"):
+            if _can_offer_appointment(state):
+                return "offer_appointment"
             if state.get("escalated") or state.get("priority") in ("P1", "P2"):
                 return "notify_human"
             return "confirm_user"
         return "slot_check"
-    # Not done yet — compose the slot question and pause for patient reply.
     return "compose_reply"
+
+
+def _route_after_offer(state: TriageState) -> str:
+    return "compose_reply"
+
+
+def _route_after_notify(state: TriageState) -> str:
+    if _can_offer_appointment(state):
+        return "offer_appointment"
+    return "confirm_user"
 
 
 def build_graph() -> StateGraph:
@@ -83,7 +106,9 @@ def build_graph() -> StateGraph:
     builder.add_node("notify_human", nodes.notify_human_node)
     builder.add_node("confirm_user", nodes.confirm_user_node)
     builder.add_node("await_human_review", nodes.await_human_review_node)
-    # Natural reply composer — every path ends here.
+    builder.add_node("offer_appointment", nodes.offer_appointment_node)
+    builder.add_node("book_appointment", nodes.book_appointment_node)
+    builder.add_node("decline_appointment", nodes.decline_appointment_node)
     builder.add_node("compose_reply", nodes.compose_reply_node)
 
     builder.add_edge(START, "ingress")
@@ -97,6 +122,9 @@ def build_graph() -> StateGraph:
             "oos_exit": "oos_exit",
             "notify_human": "notify_human",
             "confirm_user": "confirm_user",
+            "offer_appointment": "offer_appointment",
+            "book_appointment": "book_appointment",
+            "decline_appointment": "decline_appointment",
             "__end__": END,
         },
     )
@@ -121,6 +149,7 @@ def build_graph() -> StateGraph:
             "gather_slots": "gather_slots",
             "notify_human": "notify_human",
             "confirm_user": "confirm_user",
+            "offer_appointment": "offer_appointment",
         },
     )
     builder.add_conditional_edges(
@@ -130,11 +159,25 @@ def build_graph() -> StateGraph:
             "slot_check": "slot_check",
             "notify_human": "notify_human",
             "confirm_user": "confirm_user",
+            "offer_appointment": "offer_appointment",
             "compose_reply": "compose_reply",
         },
     )
-    builder.add_edge("notify_human", "confirm_user")
-    # All terminal paths converge at compose_reply → END
+    builder.add_conditional_edges(
+        "notify_human",
+        _route_after_notify,
+        {
+            "offer_appointment": "offer_appointment",
+            "confirm_user": "confirm_user",
+        },
+    )
+    builder.add_conditional_edges(
+        "offer_appointment",
+        _route_after_offer,
+        {"compose_reply": "compose_reply"},
+    )
+    builder.add_edge("book_appointment", "compose_reply")
+    builder.add_edge("decline_appointment", "compose_reply")
     builder.add_edge("confirm_user", "compose_reply")
     builder.add_edge("await_human_review", "compose_reply")
     builder.add_edge("compose_reply", END)
@@ -142,7 +185,6 @@ def build_graph() -> StateGraph:
     return builder
 
 
-# Compiled graph — import as `from app.agent.graph import graph`.
 graph = build_graph().compile()
 
 

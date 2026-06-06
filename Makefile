@@ -39,6 +39,9 @@ test-system:
 migrate:
 	cd backend && alembic upgrade head
 
+seed-kb:
+	cd backend && python -m app.scripts.seed_clinic_kb
+
 # Wipe Redis/in-memory triage sessions (dashboard queue). Does not touch Postgres.
 clear-sessions:
 	curl -s -X POST http://127.0.0.1:8000/api/dev/clear-sessions

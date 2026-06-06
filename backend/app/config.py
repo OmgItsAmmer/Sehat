@@ -30,5 +30,10 @@ class Settings(BaseSettings):
     # LangGraph max supersteps per invoke (default library limit is 25)
     langgraph_recursion_limit: int = 100
 
+    # RAG clinic knowledge base
+    rag_enabled: bool = True
+    embedding_model: str = "text-embedding-3-small"
+    rag_top_k: int = 3
+
 
 settings = Settings()

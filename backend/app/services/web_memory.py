@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from datetime import UTC, datetime
 from typing import cast
@@ -28,15 +29,20 @@ async def load(session_id: str) -> TriageState:
         try:
             raw = await client.get(key)
             if isinstance(raw, str):
-                return loads(session_id, raw)
+                try:
+                    return loads(session_id, raw)
+                except json.JSONDecodeError:
+                    logger.error("Corrupted JSON in Redis for key %s", key)
+                    return fresh_state(session_id)
             return fresh_state(session_id)
         except Exception:
-            logger.warning(
+            logger.exception(
                 "Redis load failed for web session %s — using in-memory fallback",
                 session_id,
             )
-            from app.services.memory import _invalidate_redis
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     raw = _FALLBACK.get(key)
@@ -57,12 +63,13 @@ async def save(session_id: str, state: TriageState) -> None:
             await client.set(key, payload, ex=SESSION_TTL_SECONDS)
             return
         except Exception:
-            logger.warning(
+            logger.exception(
                 "Redis save failed for web session %s — using in-memory fallback",
                 session_id,
             )
-            from app.services.memory import _invalidate_redis
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     _FALLBACK[key] = payload
@@ -85,7 +92,7 @@ async def clear_all() -> None:
         async for key in client.scan_iter(match=f"{WEB_SESSION_KEY_PREFIX}*"):
             await client.delete(key)
     except Exception:
-        logger.warning("Redis unavailable during web clear_all")
+        logger.exception("Redis unavailable during web clear_all")
 
 
 async def list_sessions() -> list[str]:
@@ -99,9 +106,10 @@ async def list_sessions() -> list[str]:
                 sessions.append(key[prefix_len:])
             return sorted(sessions)
         except Exception:
-            logger.warning("Redis list_sessions failed — using in-memory fallback")
-            from app.services.memory import _invalidate_redis
+            logger.exception("Redis list_sessions failed — using in-memory fallback")
+            from app.services.memory import _invalidate_redis, _mark_redis_unavailable
 
+            _mark_redis_unavailable()
             await _invalidate_redis()
 
     for key in _FALLBACK:

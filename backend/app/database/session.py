@@ -64,6 +64,16 @@ def db_is_available() -> bool:
     return _db_available
 
 
+def rollback_db(db: Session | None) -> None:
+    """Reset a failed transaction so later ORM calls on the same request can proceed."""
+    if db is None:
+        return
+    try:
+        db.rollback()
+    except Exception:
+        logger.exception("db rollback failed")
+
+
 def get_db() -> Generator[Session | None, None, None]:
     """
     FastAPI dependency.

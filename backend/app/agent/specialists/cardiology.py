@@ -11,6 +11,8 @@ REQUIRED_SLOTS: tuple[str, ...] = (
     "onset",
     "associated_symptoms",
     "medical_history",
+    "contact_phone",
+    "preferred_day",
 )
 
 SLOT_QUESTIONS: dict[str, str] = {
@@ -19,4 +21,8 @@ SLOT_QUESTIONS: dict[str, str] = {
     "onset": "Did it start suddenly or gradually?",
     "associated_symptoms": "Any sweating, nausea, breathlessness, or dizziness with it?",
     "medical_history": "Any prior heart problems, stents, or heart attacks in you or close family?",
+    "contact_phone": (
+        "Please share the mobile number we should use for your appointment (e.g. 03XXXXXXXXX)."
+    ),
+    "preferred_day": "Which day works best for an appointment (e.g. Monday, Wednesday)?",
 }

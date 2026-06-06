@@ -55,7 +55,17 @@ def on_startup() -> None:
     console.info("Session memory: %s | Postgres: %s", backend, db_status)
     console.info("Process PID %s (only one 'make dev' should own port 8000)", os.getpid())
 
+    # Start background inactivity checker daemon
+    from app.services.inactivity_checker import start_inactivity_checker
+
+    start_inactivity_checker()
+
 
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
     await memory.close_redis()
+
+    # Stop background inactivity checker daemon
+    from app.services.inactivity_checker import stop_inactivity_checker
+
+    await stop_inactivity_checker()

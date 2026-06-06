@@ -10,6 +10,7 @@ REQUIRED_SLOTS: tuple[str, ...] = (
     "child_weight",
     "fever_duration",
     "chief_symptoms",
+    "contact_phone",
     "preferred_day",
 )
 
@@ -18,5 +19,8 @@ SLOT_QUESTIONS: dict[str, str] = {
     "child_weight": "Roughly how much does the child weigh (kg is fine)?",
     "fever_duration": "If there is fever, how long has it lasted?",
     "chief_symptoms": "What symptoms are you most worried about right now?",
+    "contact_phone": (
+        "Please share the mobile number we should use for your appointment (e.g. 03XXXXXXXXX)."
+    ),
     "preferred_day": "Which day works best for a pediatric appointment?",
 }

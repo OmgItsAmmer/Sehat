@@ -43,7 +43,15 @@ class TriageState(TypedDict, total=False):
     reply: str
     awaiting_human_review: bool
     human_review_resolved: bool
+    intake_confirmed: bool
     last_activity_at: str | None
+    clinic_context: str
+    awaiting_appointment_consent: bool
+    appointment_consent: bool | None
+    appointment_offered: bool
+    appointment_booked: bool
+    guest_code: str | None
+    intake_finalized: bool
 
 
 def fresh_state(patient_phone: str) -> TriageState:
@@ -65,6 +73,14 @@ def fresh_state(patient_phone: str) -> TriageState:
         "reply": "",
         "awaiting_human_review": False,
         "human_review_resolved": False,
+        "intake_confirmed": False,
+        "clinic_context": "",
+        "awaiting_appointment_consent": False,
+        "appointment_consent": None,
+        "appointment_offered": False,
+        "appointment_booked": False,
+        "guest_code": None,
+        "intake_finalized": False,
     }
 
 
